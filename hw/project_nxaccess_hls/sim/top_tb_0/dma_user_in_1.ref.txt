@@ -1,0 +1,9 @@
+# configurations sent to FPGA
+
+
+# instrument data update :
+# 2$ is :
+# cpu2fpga_header   | tick_to_cancel_threshold | tick_to_trade_bid_price | tick_to_trade_ask_price |  tick_to_trade_bid_collection_id | tick_to_cancel_collection_id | tick_to_trade_ask_collection_id | instrument_id|enable
+# version 1, module 8, msgtype 1 , ack request = 0 , reserved = 0, timestamp 0x42, length unused yet
+# configuration : tick_to_trade_bid_price = 5$, tick_to_trade_ask_price = 13$
+01 08 01 00 0 42 00   0000000000000000           0000000A7A358200           0000001BF08EB000          0010                               0011                          0012                                0014         1
