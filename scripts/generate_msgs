@@ -1,0 +1,24 @@
+#!/bin/bash
+#--------------------------------------------------------------------------------
+#--! Enyx Confidential
+#--!
+#--! Organization:          Enyx
+#--! Project Identifier:    010 - Enyx nxAccess HLS Framework
+#--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
+#--!
+#--! © Copyright            Enyx 2019
+#--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+#--!                        irrespective of what has been deposited with the U.S. Copyright Office.
+#--------------------------------------------------------------------------------
+
+filename=$1
+duration=${2: -1}
+
+#while true
+#do
+	while read line
+	do
+	   echo -n "$line"
+		sleep $duration
+	done < $filename
+#done

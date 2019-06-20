@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+#--------------------------------------------------------------------------------
+#--! Enyx Confidential
+#--!
+#--! Organization:          Enyx
+#--! Project Identifier:    010 - Enyx nxAccess HLS Framework
+#--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
+#--!
+#--! © Copyright            Enyx 2019
+#--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+#--!                        irrespective of what has been deposited with the U.S. Copyright Office.
+#--------------------------------------------------------------------------------
+
+import sys
+
+for l in sys.stdin.readlines():
+    sys.stdout.write('{0}\n'.format(l.rstrip().encode('hex')))

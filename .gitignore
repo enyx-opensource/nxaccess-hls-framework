@@ -1,0 +1,7 @@
+*.log
+*.includes
+*.files
+*.creator
+*.config
+.vscode/
+*.user

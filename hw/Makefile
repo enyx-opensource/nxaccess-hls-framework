@@ -6,7 +6,7 @@
 #--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
 #--!
 #--! © Copyright            Enyx 2019
-#--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+#--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
 #--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 #--------------------------------------------------------------------------------
 
@@ -18,25 +18,31 @@ create_project:
 	$(VIVADO_CMD) configure.tcl
 	echo "Project prepared."
 	$(VIVADO_CMD) open_solution.tcl
-	echo "Solution created." 
+	echo "Solution created."
 
 build: csim csynth cosim
-	
-csim: 
+
+csim:
 	$(VIVADO_CMD) csim.tcl
-csynth: 
+csynth:
 	$(VIVADO_CMD) csynth.tcl
-cosim: 
+cosim:
 	$(VIVADO_CMD) cosim.tcl
 
 open_gui:
 	$(VIVADO_CMD) -p project_nxaccess_hls
 
+firmware:
+	$(VIVADO_CMD) csynth.tcl
+	./build_fpga.py --rtl-language vhdl
 clean:
-	echo "This will clean the vivado project files (not the source code)" 
+	echo "This will clean the vivado project files (not the source code)"
 	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
 
 
 view_diff_trigger:
 	vimdiff project_nxaccess_hls/sim/top_tb_0/tr*{gen,ref}*
+
+show_timing_info:
+	@grep -B1 -A10  "Design Timing Summary" ../../devFramework/project/synth_00.runs/impl_1/shell_top_bittware_xupp3r_vu9p_mem_eth_dyn_timing_summary_routed.rpt
 
