@@ -1,0 +1,144 @@
+#include <enyx/oe/hwstrat/demo/AlgorithmDriver.hpp>
+
+#include <endian.h>
+
+#include <functional>
+#include <type_traits>
+#include <algorithm>
+#include <iostream>
+#include <cstring>
+
+#include <libhfp/mm.hpp>
+#include <libhfp/rx.hpp>
+#include <libhfp/tx.hpp>
+#include <libhfp/error.hpp>
+#include <enyx/utils/log/macros.hpp>
+
+#include <enyx/oe/hwstrat/demo/Handler.hpp>
+#include <enyx/oe/hwstrat/demo/ErrorCode.hpp>
+
+namespace enyx {
+namespace oe {
+namespace hwstrat {
+namespace demo {
+
+namespace {
+
+constexpr std::uint32_t MMDeviceId = 0;
+const char * LogPrefix = "AlgorithmDriver";
+const char * HfpChannelUsage = "user0";
+
+template<typename Setting>
+std::error_code
+sendToFpga(::hfp::tx & tx,
+           Setting const& setting)
+{
+    int failure;
+
+    //TODO: stop condition
+    while ((failure = tx.send(&setting, sizeof(setting))) && errno == EAGAIN)
+        continue;
+
+    return ::hfp::err_to_error_code(failure);
+}
+
+const uint8_t APPLICATION_VERSION = 1;
+
+} // namespace
+
+struct AlgorithmDriver::Impl {
+    Impl(std::uint16_t boardId,
+         Handler & handler)
+            : boardId_(boardId),
+              handler_(handler) {
+    }
+    ~Impl() = default;
+
+    Impl(const Impl&) = delete;
+    Impl& operator=(const Impl&) = delete;
+
+    void
+    operator()(const std::uint8_t * data, std::uint32_t size) {
+        using HeaderType = FpgaToCpuHeader;
+
+        if (size <= sizeof(HeaderType)) {
+            handler_.onError(make_error_code(CORRUPTED_APPLICATION_HEADER));
+            return;
+        }
+
+        const auto * header = reinterpret_cast<const HeaderType*>(data);
+
+        // Sanity check
+        if (header->length != size
+                || header->version != APPLICATION_VERSION) {
+            LOG_ME(NX_CRITICAL, "[%s] Corrupted application header: version: %d"
+                " length: %d  buffer size: %d",
+                 LogPrefix, header->version, header->length, size);
+            handler_.onError(make_error_code(CORRUPTED_APPLICATION_HEADER));
+            return;
+        }
+
+        switch (static_cast<ModulesIds>(header->source)) {
+            case ModulesIds::InstrumentDataConfiguration:
+                handler_.on(*reinterpret_cast<const InstrumentConfigurationAckMessage*>(data));
+                return;
+            case ModulesIds::SoftwareTrigger:
+                LOG_ME(NX_CRITICAL, "[%s] Received unexpected Software Trigger message", LogPrefix);
+                handler_.onError(make_error_code(UNKNOWN_ALGORITHM_MESSAGE));
+                return;
+            case ModulesIds::TickToCancel:
+                handler_.on(*reinterpret_cast<const TickToCancelNotificationMessage*>(data));
+                return;
+            case ModulesIds::TickToTrade:
+                handler_.on(*reinterpret_cast<const TickToTradeNotificationMessage*>(data));
+                return;
+        }
+        LOG_ME(NX_CRITICAL, "[%s] Message received with unknown source: %d", LogPrefix, header->source);
+        handler_.onError(make_error_code(UNKNOWN_ALGORITHM_MESSAGE));
+
+    }
+
+    const uint16_t boardId_;
+    ::hfp::mm mm_{boardId_, MMDeviceId};
+    ::hfp::rx rx_{boardId_, HfpChannelUsage};
+    ::hfp::tx tx_{boardId_, HfpChannelUsage};
+    ::hfp::rx::poller<std::reference_wrapper<Impl>> rxPoller_{rx_.get_poller(std::ref(*this))};
+    Handler & handler_;
+};
+
+AlgorithmDriver::AlgorithmDriver(Handler & handler,
+                                 std::uint16_t boardIndex)
+    : impl_(new Impl{boardIndex, std::ref(handler)}) {
+}
+
+AlgorithmDriver::~AlgorithmDriver() = default;
+
+std::error_code
+AlgorithmDriver::poll() {
+    assert(impl_);
+    impl_->rxPoller_.poll();
+    return std::error_code{};
+}
+
+std::error_code
+AlgorithmDriver::sendConfiguration(const InstrumentConfiguration & conf) {
+    assert(impl_);
+    InstrumentConfigurationMessage update;
+    // Header
+    update.header.version = APPLICATION_VERSION;
+    update.header.dest = static_cast<uint8_t>(ModulesIds::InstrumentDataConfiguration);
+    update.header.msg_type = 0; // TODO: not currently used
+    update.header.ack_request = 1;
+    update.header.timestamp = 0;
+    update.header.length = sizeof(update);
+
+    //body
+    update.configuration = conf;
+
+    return sendToFpga(impl_->tx_, update);
+}
+
+} // namespace demo
+} // namespace hwstrat
+} // namespace oe
+} // namespace enyx
