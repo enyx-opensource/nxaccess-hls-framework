@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <iostream>
+#include <cassert>
 
 #include "../include/enyx/oe/hwstrat/nxoe.hpp"
 #include "tick2trade.hpp"
@@ -23,12 +24,22 @@ namespace nxaccess_hw_algo {
 
 using namespace enyx::oe::hwstrat;
 
+static void fill_header(user_dma_tick2trade_notification& notification, Tick2trade::notifications_messages_types message_type) {
+    notification.header.error = 0;
+    notification.header.version = 1;
+    notification.header.source = enyx::oe::nxaccess_hw_algo::Tick2trade;
+    // we encode the side of the decision but it's only for showing that we have a message type that could be use 
+    // to transport several type of messages to host
+    notification.header.msg_type = uint8_t(message_type);
+    notification.header.length = 0x3000;
+}
+
 void
 Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                         hls::stream<InstrumentConfiguration::read_instrument_data_request> & instrument_data_req,
                         hls::stream<InstrumentConfiguration::instrument_configuration_data_item> & instrument_data_resp,
                         hls::stream<nxoe::trigger_command_axi> & trigger_axibus_out,
-                        hls::stream<dma_user_channel_data_out>& user_dma_channel_data_out,
+                        hls::stream<user_dma_tick2trade_notification>& tick2trade_notification_out,
                         hls::stream<enyx::md::hw::BooksData<2,256>::read_book_data_request> & book_req_out,
                         hls::stream<enyx::md::hw::BooksData<2,256>::book_entry> & books_in)
 {
@@ -106,16 +117,26 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                                          trigger_config.tick_to_trade_bid_collection_id, // Collection to Trigger
                                          pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
                                          0x1ee1311cafedeca, // Specify any 128 bit value that you want
-                                         2, // 2 means tick-to-cancel trigger
+                                         2, // 2 means tick-to-trade trigger
                                          1 // 1 means trade summary < top bid
                                          ); // Other Arguments don't have to be specified if not needed
             
+                user_dma_tick2trade_notification notification;
+                fill_header(notification, AlgoTriggeredOnBid);
+                //applicative layer 
+                notification.sent_collection_id = trigger_config.tick_to_trade_bid_collection_id;
+                notification.trade_summary_price = pending_nxbus_data.price;
+                notification.instrument_id = pending_nxbus_data.instr_id;
+                notification.threshold_price = trigger_config.tick_to_trade_bid_price;
+                notification.is_bid = 0; 
+                tick2trade_notification_out.write(notification); // write to the internal notification data bus
+
             // The Trade Summary message agressor side is on the sell side
             } else if ((  trigger_config.enabled
                         && trigger_config.tick_to_trade_ask_price != 0) // Was this trade configured?
                         && (pending_nxbus_data.price < trigger_config.tick_to_trade_ask_price) // Is the price better than the last TOB?
                         &&  (pending_nxbus_data.buy_nsell == 0)) // Is the agressor side == sell
-                {
+            {
                 std::cout << "[TICK2TRADE] at nxbus timestamp " << std::hex << pending_nxbus_data.timestamp << " : "
                           << " market price="  << pending_nxbus_data.price << " > trigger ask price=" << trigger_config.tick_to_trade_ask_price
                           << " -> triggering collection "  << std::hex << trigger_config.tick_to_trade_ask_collection_id << std::dec <<  std::endl;
@@ -123,16 +144,21 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_ask_collection_id, // Collection to Trigger
                                          pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
-                                         0x1ee1311cafedeca, // Specify any 128 bit value that you want
-                                         2, // 2 means tick-to-cancel trigger
+                                         0x1ee1313cafedeca, // Specify any 128 bit value that you want
+                                         2, // 2 means tick-to-trade trigger
                                          2 // 2 means trade summary > top ask
                                          ); // Other Arguments don't have to be specified if not needed
 
-                // send a notification to user
-                dma_user_channel_data_out out;
-                out.last = 1;
-                out.data = 0xcafe1003;
-                user_dma_channel_data_out.write(out);
+                // write notification in 1clk max
+                user_dma_tick2trade_notification notification;
+                fill_header(notification, AlgoTriggeredOnAsk);
+                //applicative layer 
+                notification.sent_collection_id = trigger_config.tick_to_trade_ask_collection_id;
+                notification.trade_summary_price = pending_nxbus_data.price;
+                notification.instrument_id = pending_nxbus_data.instr_id;
+                notification.threshold_price = trigger_config.tick_to_trade_ask_price;
+                notification.is_bid = 0; 
+                tick2trade_notification_out.write(notification); // write to the internal notification data bus
             }
 
             // Whatever happen (trigger or not), we must change to IDLE, as we are ready
@@ -142,5 +168,33 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
     } //case WAITING_FOR_INSTRUMENT_DATA
     } // switch
 } // p_algo
+
+enyx::hfp::hls::dma_user_channel_data_out
+Tick2trade::notification_to_word(const user_dma_tick2trade_notification& notif_in, int word_index)
+{
+    enyx::hfp::hls::dma_user_channel_data_out out_word; 
+    
+    switch(word_index) {
+        case 1: {
+        out_word.data(127, 64) =  enyx::oe::hwstrat::get_word(notif_in.header); //64
+        out_word.data(63,0) = notif_in.trade_summary_price; // 64
+        out_word.last = 0;
+        break;
+        }
+        case 2: {
+            out_word.data(127,64)=  notif_in.threshold_price;  // 64
+            out_word.data(63,32) = notif_in.instrument_id; // 32
+            out_word.data(31, 16) = notif_in.sent_collection_id; 
+            out_word.data(15,8) = notif_in.is_bid;
+            out_word.last = 1;
+            break;
+        }
+        default:
+            assert(false && "Handling only 2 words for user_dma_tick2trade_notification encoding");
+  
+    }
+    return out_word;
+}
+
 
 }}}

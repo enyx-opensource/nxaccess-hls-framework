@@ -10,8 +10,7 @@
 //--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 //--------------------------------------------------------------------------------
 
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#pragma once
 
 #include <cstddef>
 #include <ap_int.h>
@@ -27,29 +26,6 @@
 
 
 #include "messages.hpp"
-namespace enyx {
-namespace hfp {
-namespace hls {
-
-// This needs to be define here because the Vivado tools
-// loses track of multiple definitions and then cannot cast
-// properly. This is a limitation of the Vivado environment 
-// that will be fixed in future versions.
-
-// Messages received/sent from/to DMA
-struct dma_user_channel_data_in {
-    ap_uint<128> data;
-    ap_uint<1> last;
-};
-
-struct dma_user_channel_data_out {
-    ap_uint<128> data;
-    ap_uint<1> last;
-};
-
-
-
-}}} // Namespaces
 
 namespace nxmd = enyx::md::hw;
 namespace nxoe  = enyx::oe::hwstrat;
@@ -59,7 +35,7 @@ namespace oe {
 namespace nxaccess_hw_algo {
 
 using namespace enyx::hfp::hls;
-void write_word(user_dma_update_instrument_configuration& in, ap_uint<128>& out_word, int word_index);
+
 
 class InstrumentConfiguration
 {
@@ -86,7 +62,7 @@ class InstrumentConfiguration
 
         ap_uint<nxmd::nxbus_meta_sizes::NXBUS_SIZE_PRICE> tick_to_trade_ask_price;
         ap_uint<nxoe::trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> tick_to_trade_ask_collection_id;
-    };
+    }; // 241 bits wide
 
 
     InstrumentConfiguration() {}
@@ -97,7 +73,14 @@ class InstrumentConfiguration
     p_handle_instrument_configuration(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & conf_in,
                                                hls::stream<read_instrument_data_request> (& req_in)[2],
                                                hls::stream<instrument_configuration_data_item> (& req_out)[2],
-                                               hls::stream<enyx::hfp::hls::dma_user_channel_data_out> & conf_out);
+                                               hls::stream<user_dma_update_instrument_configuration_ack> & conf_out);
+
+
+    static void write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::hls::dma_user_channel_data_out& word,  int word_index);
+    static void write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::hls::dma_user_channel_data_out& word, int word_index);
+    
+    static void read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::hls::dma_user_channel_data_in& word, int word_index);
+    static void read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::hls::dma_user_channel_data_in& word,  int word_index);
 
 
 };
@@ -105,4 +88,3 @@ class InstrumentConfiguration
 }
 }
 }
-#endif // CONFIGURATION_H

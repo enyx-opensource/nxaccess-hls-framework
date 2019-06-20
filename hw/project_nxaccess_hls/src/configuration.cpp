@@ -53,25 +53,25 @@ convert(InstrumentConfiguration::instrument_configuration_data_item & internal_d
 
 /// Converts data words from User DMA to software message structure
 void
-read_word(user_dma_update_instrument_configuration& ret, ap_uint<128> word, int word_index) {
+InstrumentConfiguration::read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::hls::dma_user_channel_data_in& word, int word_index) {
    #pragma HLS function_instantiate variable=word_index
     switch(word_index) {
     case 1: {
-        enyx::oe::hwstrat::read_word(ret.header, word(127,64));
-        ret.tick_to_cancel_threshold = word(63,0);
+        enyx::oe::hwstrat::read_word(ret.header, word.data(127,64));
+        ret.tick_to_cancel_threshold = word.data(63,0);
         break;
     }
     case 2: {
-        ret.tick_to_trade_bid_price = word(127,64);
-        ret.tick_to_trade_ask_price = word(63,0);
+        ret.tick_to_trade_bid_price = word.data(127,64);
+        ret.tick_to_trade_ask_price = word.data(63,0);
         break;
     }
     case 3: {
-        ret.instrument_id = word(127, 96);
-        ret.tick_to_trade_bid_collection_id = word(95, 80);
-        ret.tick_to_cancel_collection_id = word(79, 64);
-        ret.tick_to_trade_ask_collection_id = word(63, 48);
-        ret.enabled = word(47, 40);
+        ret.instrument_id = word.data(127, 96);
+        ret.tick_to_trade_bid_collection_id = word.data(95, 80);
+        ret.tick_to_cancel_collection_id = word.data(79, 64);
+        ret.tick_to_trade_ask_collection_id = word.data(63, 48);
+        ret.enabled = word.data(47, 40);
         break;
     }
     default:
@@ -79,37 +79,109 @@ read_word(user_dma_update_instrument_configuration& ret, ap_uint<128> word, int 
     }
 }
 
-/// Converts User DMA to software message structure to data wordss
+
+/// Converts data words from User DMA to software message structure
 void
-write_word(user_dma_update_instrument_configuration& in, ap_uint<128>& out_word, int word_index) {
+InstrumentConfiguration::read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::hls::dma_user_channel_data_in& word, int word_index) {
    #pragma HLS function_instantiate variable=word_index
     switch(word_index) {
     case 1: {
-        out_word(127, 64) = enyx::oe::hwstrat::get_word(in.header); //64
-        out_word(63,0) = in.tick_to_cancel_threshold;
+        enyx::oe::hwstrat::read_word(ret.header, word.data(127,64));
+        ret.tick_to_cancel_threshold = word.data(63,0);
         break;
     }
     case 2: {
-        out_word(127,64)=  in.tick_to_trade_bid_price;  // 64
-        out_word(63,0) = in.tick_to_trade_ask_price; // 64
+        ret.tick_to_trade_bid_price = word.data(127,64);
+        ret.tick_to_trade_ask_price = word.data(63,0);
         break;
     }
     case 3: {
-        out_word(127,96) = in.instrument_id; //32
-        out_word(95, 80) = in.tick_to_trade_bid_collection_id; //16
-        out_word(79, 64) = in.tick_to_cancel_collection_id; //16
-        out_word(63, 48) = in.tick_to_trade_ask_collection_id; //16
-        out_word(47, 40) = in.enabled; //8
+        ret.instrument_id = word.data(127, 96);
+        ret.tick_to_trade_bid_collection_id = word.data(95, 80);
+        ret.tick_to_cancel_collection_id = word.data(79, 64);
+        ret.tick_to_trade_ask_collection_id = word.data(63, 48);
+        ret.enabled = word.data(47, 40);
         break;
     }
     default:
         assert(false && "Handling only 4 words for user_dma_update_instrument_configuration decoding");
+    }
+}
+
+
+/// Converts configuration message ack to software message structure to data words
+void
+InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::hls::dma_user_channel_data_out& out_word, int word_index) {
+   #pragma HLS function_instantiate variable=word_index
+    switch(word_index) {
+    case 1: {
+        out_word.data(127, 64) =  enyx::oe::hwstrat::get_word(in.header); //64
+        out_word.data(63,0) = in.tick_to_cancel_threshold; // 64
+        out_word.last = 0;
+        break;
+    }
+    case 2: {
+        out_word.data(127,64)=  in.tick_to_trade_bid_price;  // 64
+        out_word.data(63,0) = in.tick_to_trade_ask_price; // 64
+        out_word.last = 0 ;
+        break;
+    }
+    case 3: {
+        out_word.data(127,96) = in.instrument_id; //32
+        out_word.data(95, 80) = in.tick_to_trade_bid_collection_id; //16
+        out_word.data(79, 64) = in.tick_to_cancel_collection_id; //16
+        out_word.data(63, 48) = in.tick_to_trade_ask_collection_id; //16
+        out_word.data(47, 40) = in.enabled; //8
+        out_word.last = 1;
+        break;
+    }
+    default:
+        assert(false && "Handling only 3 words for user_dma_update_instrument_configuration decoding");
+    }
+}
+
+/// Converts configuration message ack to software message structure to data words
+void
+InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::hls::dma_user_channel_data_out& out_word, int word_index) {
+   #pragma HLS function_instantiate variable=word_index
+    switch(word_index) {
+    case 1: {
+        out_word.data(127, 64) =  enyx::oe::hwstrat::get_word(in.header); //64
+        out_word.data(63,0) = in.tick_to_cancel_threshold; // 64
+        out_word.last = 0;
+        break;
+    }
+    case 2: {
+        out_word.data(127,64)=  in.tick_to_trade_bid_price;  // 64
+        out_word.data(63,0) = in.tick_to_trade_ask_price; // 64
+        out_word.last = 0;
+        break;
+    }
+    case 3: {
+        out_word.data(127,96) = in.instrument_id; //32
+        out_word.data(95, 80) = in.tick_to_trade_bid_collection_id; //16
+        out_word.data(79, 64) = in.tick_to_cancel_collection_id; //16
+        out_word.data(63, 48) = in.tick_to_trade_ask_collection_id; //16
+        out_word.data(47, 40) = in.enabled; //8
+        out_word.last = 1;
+        break;
+    }
+    default:
+        assert(false && "Handling only 3 words for user_dma_update_instrument_configuration decoding");
     }
 }
 
 std::ostream& operator<<(std::ostream& os, const user_dma_update_instrument_configuration& conf)
 {
-    os << "header: " << conf.header; // TODO : remaining fields
+    os << "header: " << conf.header << "\n"
+       << "t2c threshold: " << conf.tick_to_cancel_threshold << "\n"
+       << "t2t bid price: " << conf.tick_to_trade_bid_price << "\n"
+       << "t2t ask price: " << conf.tick_to_trade_ask_price << "\n"
+       << "instrument Id: " << conf.instrument_id << "\n"
+       << "t2t bid colId: " << conf.tick_to_trade_bid_collection_id << "\n"
+       << "t2c col Id   : " << conf.tick_to_cancel_collection_id << "\n"
+       << "t2t ask colId: " << conf.tick_to_trade_ask_collection_id << "\n"
+       << "instrument Id: " << conf.enabled;
     return os;
 }
 
@@ -117,7 +189,7 @@ void
 InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & conf_in,
                                                           hls::stream<InstrumentConfiguration::read_instrument_data_request> (& req_in)[2],
                                                           hls::stream<instrument_configuration_data_item> (& req_out)[2],
-                                                          hls::stream<enyx::hfp::hls::dma_user_channel_data_out> & conf_out) {
+                                                          hls::stream<user_dma_update_instrument_configuration_ack> & conf_out) {
 
 #pragma HLS INLINE recursive
 #pragma HLS PIPELINE enable_flush
@@ -132,14 +204,16 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
     static user_dma_update_instrument_configuration current_dma_message_read; /// DMA message being parsed message.
     static instrument_configuration_data_item write_data ;
     static InstrumentConfiguration::instrument_configuration_data_item values[InstrumentConfiguration::instrument_count];
+#pragma HLS RESOURCE variable=values core=XPM_MEMORY uram 
 
     switch(current_state) {
 
     case IDLE:
     {
             if(!conf_in.empty()) {
+                
                    enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
-                   read_word(current_dma_message_read, _read.data, 1); // convert word 1 into struct
+                   read_word(current_dma_message_read, _read, 1); // convert word 1 into struct
                    if((current_dma_message_read.header.dest == enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration)
                            && (current_dma_message_read.header.msg_type == InstrumentConfiguration::UpdateInstrumentData)
                            && (current_dma_message_read.header.version == 1))
@@ -149,7 +223,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
 
                        current_state = READ_CONF_WORD2; // now process second word of packet
                    } else {
-                       std::cout << "[CONF] Incoming configuration message : message unknown, ignoring ! \n" ;
+                       std::cout << "[WARNING][CONF] Incoming configuration message : message unknown, ignoring ! \n" ;
                        current_state = IGNORE_PACKET;
                    }
 
@@ -168,7 +242,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
         if(!conf_in.empty()) {
             std::cout << "[CONF] processing word 2 of configuration message \n";
             enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
-            read_word(current_dma_message_read, _read.data, 2); // convert word 2 into struct
+            read_word(current_dma_message_read, _read, 2); // convert word 2 into struct
             current_state = READ_CONF_WORD3;
         }
         for(int i = 0; i != 2; ++i) {
@@ -183,7 +257,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
 
             std::cout << "[CONF] processing word 3 of configuration message \n";
             enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
-            read_word(current_dma_message_read, _read.data, 3); // convert word 4 into struct
+            read_word(current_dma_message_read, _read, 3); // convert word 4 into struct
             // convert it to instrument_configuration_data_item
             convert(write_data, current_dma_message_read);
             values[current_dma_message_read.instrument_id] = write_data;
@@ -195,10 +269,25 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
                       << " tick_to_cancel_collid=" <<    std::hex << current_dma_message_read.tick_to_cancel_collection_id
                       << "\n";
 
-            enyx::hfp::hls::dma_user_channel_data_out _output = enyx::hfp::hls::dma_user_channel_data_out();
-            _output.data(63,0) = 0xcafebabe; // sends this to software, just for fun. Future version will implement an ack mechanism.
-            _output.last = 1;
-            conf_out.write(_output);
+            user_dma_update_instrument_configuration_ack ack;
+            //header
+            ack.header.error = 0;
+            ack.header.version = 1;
+            ack.header.source = enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration;
+            ack.header.msg_type = InstrumentConfiguration::UpdateInstrumentData; // only notifications
+            ack.header.length = 0x6513; //unused here, shall be needed for retrocompat'. We put here a dump value.
+            //applicative layer 
+            ack.instrument_id = current_dma_message_read.instrument_id;
+            ack.enabled = current_dma_message_read.enabled;
+            ack.tick_to_cancel_collection_id = current_dma_message_read.tick_to_cancel_collection_id;
+            ack.tick_to_cancel_threshold = current_dma_message_read.tick_to_cancel_threshold;
+            ack.tick_to_trade_ask_collection_id = current_dma_message_read.tick_to_trade_ask_collection_id;
+            ack.tick_to_trade_ask_price = current_dma_message_read.tick_to_trade_ask_price;
+            ack.tick_to_trade_bid_collection_id = current_dma_message_read.tick_to_trade_bid_collection_id;
+            ack.tick_to_trade_bid_price = current_dma_message_read.tick_to_trade_bid_price;
+
+            conf_out.write(ack);
+
             current_state = IDLE;
         }
         break;

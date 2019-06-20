@@ -10,6 +10,7 @@ add_files $here/project_nxaccess_hls/src/top.cpp -cflags {-fno-builtin -Wno-taut
 add_files $here/project_nxaccess_hls/src/tick2cancel.cpp -cflags {-fno-builtin -Wno-tautological-compare -I./ }
 add_files $here/project_nxaccess_hls/src/tick2trade.cpp -cflags {-fno-builtin -Wno-tautological-compare -I./ }
 add_files $here/project_nxaccess_hls/src/configuration.cpp -cflags {-fno-builtin -Wno-tautological-compare -I./ }
+add_files $here/project_nxaccess_hls/src/notifications.cpp -cflags {-fno-builtin -Wno-tautological-compare -I./ }
 
 add_files -tb $here/project_nxaccess_hls/sim/top_tb.cpp -cflags {-fno-builtin -Wno-unknown-pragmas -I../include }
 add_files -tb $here/project_nxaccess_hls/sim/top_tb_0

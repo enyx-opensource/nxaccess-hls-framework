@@ -26,13 +26,16 @@
 #include "configuration.hpp"
 #include "tick2cancel.hpp"
 #include "tick2trade.hpp"
+#include "notifications.hpp"
+
+#include "messages.hpp"
 
 using namespace enyx::oe::hwstrat; // use nxAccess HLS framework.
 
 namespace algo = enyx::oe::nxaccess_hw_algo; // use nxAccess basic example
 namespace nxmd = enyx::md::hw;
 namespace nxoe = enyx::oe::hwstrat;
-using namespace enyx::hfp::hls;
+// using namespace enyx::hfp::hls;
 
 // Modification of these constant will change the whole core behavior
 // the strategy can only handle instrument_count instruments at present
@@ -63,8 +66,10 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
 #pragma HLS DATAFLOW
 
    // Instrument Based Configuration Access Buses
+
    static hls::stream<algo::InstrumentConfiguration::read_instrument_data_request> instrument_read_bus[strategy_count]; //instrument read request bus
 #pragma HLS STREAM variable=instrument_read_bus depth=1
+
    static hls::stream<algo::InstrumentConfiguration::instrument_configuration_data_item> instrument_read_responses[strategy_count]; //instrument response bus
 #pragma HLS STREAM variable=instrument_read_responses depth=1
 
@@ -93,10 +98,18 @@ struct nxbus_to_decision {} ;
 
    // User notification DMA channel : need to arbitrate between configuration module and strategies
    struct dma_notifications{};
-   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +1, dma_user_channel_data_out>  dma_notification_arbiter_type;
-   static hls::stream<dma_user_channel_data_out> notifications_to_cpu[strategy_count+1]; /// transports algo notification to the DMA
-#pragma HLS STREAM variable=notifications_to_cpu depth=1
-   dma_notification_arbiter_type::p_arbitrate(notifications_to_cpu, user_dma_channel_data_out);
+   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +1, enyx::hfp::hls::dma_user_channel_data_out>  dma_notification_arbiter_type;
+   // static hls::stream<dma_user_channel_data_out> notifications_to_cpu[strategy_count+1]; /// transports algo notification to the DMA
+   // #pragma HLS STREAM variable=notifications_to_cpu depth=1
+   // dma_notification_arbiter_type::p_arbitrate(notifications_to_cpu, user_dma_channel_data_out);
+
+   // data buses for notifications; as notifying to the DMA can be a long process, we set 32 items as depth for these FIFOs
+   hls::stream<algo::user_dma_update_instrument_configuration_ack> config_to_notifs;
+   #pragma HLS STREAM variable=config_to_notifs depth=4
+   hls::stream<algo::user_dma_tick2trade_notification> tick2trade_to_notifs;
+   #pragma HLS STREAM variable=tick2trade_to_notifs depth=4
+   hls::stream<algo::user_dma_tick2cancel_notification> tick2cancel_to_notifs;
+   #pragma HLS STREAM variable=tick2cancel_to_notifs depth=4
 
 
    // Tick to Cancel Algorithm
@@ -104,7 +117,7 @@ struct nxbus_to_decision {} ;
                            instrument_read_bus[0],
                            instrument_read_responses[0],
                            decisions_ouputs[0],
-                           notifications_to_cpu[0],
+                           tick2cancel_to_notifs,
                            read_book_request_bus[0],
                            books[0]);
 
@@ -113,7 +126,7 @@ struct nxbus_to_decision {} ;
                            instrument_read_bus[1],
                            instrument_read_responses[1],
                            decisions_ouputs[1],
-                           notifications_to_cpu[1],
+                           tick2trade_to_notifs,
                            read_book_request_bus[1],
                            books[1]);
 
@@ -131,7 +144,13 @@ struct nxbus_to_decision {} ;
     algo::InstrumentConfiguration::p_handle_instrument_configuration(user_dma_channel_data_in,
                                                                        instrument_read_bus,
                                                                        instrument_read_responses,
-                                                                       notifications_to_cpu[strategy_count]);
+                                                                       config_to_notifs); 
+
+     // Handle notifications from workers to DMA 
+     algo::Notifications::p_broadcast_notifications(tick2cancel_to_notifs, 
+                                                   tick2trade_to_notifs, 
+                                                   config_to_notifs, 
+                                                   user_dma_channel_data_out);
    // counters
    *supported_instrument_count = instrument_count;
 }

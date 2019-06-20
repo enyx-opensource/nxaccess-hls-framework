@@ -11,7 +11,7 @@
 //--------------------------------------------------------------------------------
 
 #pragma once
-
+#include <iostream>
 #include <ap_int.h>
 #include <hls_stream.h>
 

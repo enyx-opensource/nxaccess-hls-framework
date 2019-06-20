@@ -15,7 +15,6 @@
 
 /// This file defines the FPGA/CPU messages layouts exchanges in the nxAccess HLS demo project.
 /// This file can be reused by software only lib, no dependency on HLS libs.
-
 #include "../include/enyx/oe/hwstrat/msg_headers.hpp"
 
 namespace enyx {
@@ -23,7 +22,7 @@ namespace oe {
 namespace nxaccess_hw_algo {
 
 
-/// Complete message layout to configure an instrument trigger, for CPU2FPGA comm
+/// Complete message layout to configure an instrument trigger, for CPU->FPGA comm
 #pragma pack(1)
 struct user_dma_update_instrument_configuration {
     // word 1
@@ -42,27 +41,31 @@ struct user_dma_update_instrument_configuration {
 
 };
 
-// only on GCC 4.6
-//_Static_assert(64 == sizeof(user_dma_update_instrument_configuration), "Size of user_dma_update_instrument_configuration is invalid");
-//static_assert(64 == sizeof(user_dma_update_instrument_configuration), "Size of user_dma_update_instrument_configuration is invalid");
+#  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
+  static_assert(64 == sizeof(user_dma_update_instrument_configuration), "Size of user_dma_update_instrument_configuration is invalid");
+# else
+   # if __GNUC_MAJOR__ >= 4 // only available on GCC 4.6+. What about clang ?
+     _Static_assert(64 == sizeof(user_dma_update_instrument_configuration), "Size of user_dma_update_instrument_configuration is invalid");
+   # endif
+# endif
 
-/// Complete message layout to configure an instrument trigger, for CPU2FPGA comm
+
+/// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
 #pragma pack(1)
 struct user_dma_update_instrument_configuration_ack {
+    //16B
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
-    uint8_t enabled; /// Whether the configuration fot this instrument is enabled or not.
-    uint32_t instrument_id; /// instrument id to trigger on
-
     uint64_t tick_to_cancel_threshold; // price for tick 2 cancel
-    uint16_t tick_to_cancel_collection_id; // collection id to trigger if price under threshold
-
+    //16B
     uint64_t tick_to_trade_bid_price; // price for tick 2 cancel
-    uint16_t tick_to_trade_bid_collection_id; // collection id to trigger if price under threshold
-
     uint64_t tick_to_trade_ask_price; // price for tick 2 cancel
+    //16B
+    uint32_t instrument_id; /// instrument id to trigger on
+    uint16_t tick_to_trade_bid_collection_id; // collection id to trigger if price under threshold
+    uint16_t tick_to_cancel_collection_id; // collection id to trigger if price under threshold
     uint16_t tick_to_trade_ask_collection_id; // collection id to trigger if price under threshold
-    char padding[21]; //ensure aligned on 128bits words
-
+    uint8_t enabled; /// Whether the configuration for this instrument is enabled or not.
+    char padding[5]; //ensure aligned on 128bits words
 };
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
   static_assert(64 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
@@ -71,8 +74,58 @@ struct user_dma_update_instrument_configuration_ack {
      _Static_assert(64 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
    # endif
 # endif
+
+
+
+/// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
+#pragma pack(1)
+struct user_dma_tick2cancel_notification {
+    //16B 
+    struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
+    uint64_t trade_summary_price; // price that triggered the send
+    //16B
+    uint64_t book_top_level_price; // book top level price
+    uint64_t threshold; // algo threshold    
+    // 16B
+    uint32_t instrument_id; /// instrument id to trigger on
+    uint16_t sent_collection_id; // triggered collection id
+    uint8_t is_bid; /// Whether the configuration fot this instrument is enabled or not.
+    char padding[9]; // pad to ensure 128b 
+};
+#  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
+  static_assert(48 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
+# else
+   # if __GNUC_MAJOR__ >= 4 // only available on GCC 4.6+. What about clang ?
+     _Static_assert(48 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
+   # endif
+# endif
+
+
+/// Complete message layout to configure an instrument trigger, for CPU2FPGA comm
+#pragma pack(1)
+struct user_dma_tick2trade_notification {
+    //16B
+    struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
+    uint64_t trade_summary_price; // price that triggered the send
+    //16B
+    uint64_t threshold_price; // threshold for algo
+    uint32_t instrument_id; /// instrument id to trigger on
+    uint16_t sent_collection_id; // triggered collection id  
+    uint8_t is_bid; /// Whether the configuration fot this instrument is enabled or not.
+    char padding[1]; //ensure aligned on 128bits words
+
+};
+#  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
+  static_assert(32 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
+# else
+   # if __GNUC_MAJOR__ >= 4 // only available on GCC 4.6+. What about clang ?
+     _Static_assert(32 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
+   # endif
+# endif
+
+
 // Modules Ids for this architecture
-enum {
+enum fpga_modules_ids {
     Reserved0, // Reserved for enyx
     Reserved1, // Reserved for enyx
     Reserved2, // Reserved for enyx
@@ -82,13 +135,38 @@ enum {
     Reserved6, // Reserved for enyx
     Reserved7, // Reserved for enyx
     InstrumentDataConfiguration = 8, // Module that handle instrument configuration, see configuration.hpp
-    SoftwareTrigger = 9, // Not implemented yet, reserved for module handling trigger from software.
-} fpga_modules_ids;
-
-
+    SoftwareTrigger = 9, // Not implemented yet, reserved for module handling trigger from software. // Not present in demonstration
+    Tick2cancel = 10,   // tick2cancel strategy
+    Tick2trade = 11 // tick2trade strategy
+}; // application specific definition of module ids.
 
 }
 }
 }
+
+namespace enyx {
+namespace hfp {
+namespace hls {
+
+// This currently needs to be defined here because the Vivado tools
+// loses track of multiple definitions and then cannot cast
+// properly. This is a limitation of the Vivado environment 
+// that will be fixed in future versions.
+
+// Messages received/sent from/to DMA
+#ifndef ENYX_NO_HLS_SUPPORT
+struct dma_user_channel_data_in {
+    ap_uint<128> data;
+    ap_uint<1> last;
+};
+
+struct dma_user_channel_data_out {
+    ap_uint<128> data;
+    ap_uint<1> last;
+};
+#endif
+
+
+}}} // Namespaces
 
 #endif // MESSAGES_HPP

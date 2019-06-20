@@ -36,6 +36,16 @@ struct cpu2fpga_header {
 
 };
 
+
+#  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
+  static_assert(8 == sizeof(cpu2fpga_header), "Size of cpu2fpga_header is invalid");
+# else
+   # if __GNUC_MAJOR__ >= 4 // only available on GCC 4.6+. What about clang ?
+     _Static_assert(8 == sizeof(cpu2fpga_header), "Size of cpu2fpga_header is invalid");
+   # endif
+# endif
+
+
 //static_assert(8 == sizeof(cpu2fpga_header), "Invalid cpu2fpga header size. Must be 8B");
 //_Static_assert(8 == sizeof(cpu2fpga_header), "Invalid cpu2fpga header size. Must be 8B");
 
@@ -51,6 +61,15 @@ struct fpga2cpu_header {
     uint32_t timestamp;   /// future use : hw timestamp, unused for now.
     uint16_t length;    /// message format version
 };
+
+
+#  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
+  static_assert(8 == sizeof(fpga2cpu_header), "Size of user_dma_update_instrument_configuration is invalid");
+# else
+   # if __GNUC_MAJOR__ >= 4 // only available on GCC 4.6+. What about clang ?
+     _Static_assert(8 == sizeof(fpga2cpu_header), "Size of user_dma_update_instrument_configuration is invalid");
+   # endif
+# endif
 
 // Modules Ids convention for all Enyx nxAccess HLS designs
 enum {

@@ -168,18 +168,22 @@ private:
         out.length =  enyx::get_from_hex_stream_as<uint32_t>(in);
     }
 
+    /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::hls::dma_user_channel_data_in) 
     static void
     convert_string_to_dma_channel_in(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & result, std::string const& content)
     {
-        // We want to read this kind of line:
+        // We want to read :
 //        # cpu2fpga_header   | tick_to_cancel_threshold | tick_to_trade_bid_price | tick_to_trade_ask_price |  tick_to_trade_bid_collection_id | tick_to_cancel_collection_id | tick_to_trade_ask_collection_id | instrument_id|enable
 //        # version 1, module 8, msgtype 1 , ack request = 0 , reserved = 0, timestamp 0x42, length unused yet
 //        01 08 01 00 0 42 00   00000004A817C800           0000000000000000           0000000000000000          0010                               0011                          0012                                0014         1
 
-        enyx::hfp::hls::dma_user_channel_data_in word1;
-        enyx::hfp::hls::dma_user_channel_data_in word2;
-        enyx::hfp::hls::dma_user_channel_data_in word3;
+        enyx::hfp::hls::dma_user_channel_data_out word1;
+        enyx::hfp::hls::dma_user_channel_data_out word2;
+        enyx::hfp::hls::dma_user_channel_data_out word3;
+        enyx::hfp::hls::dma_user_channel_data_in word;
 
+        enyx::hfp::hls::dma_user_channel_data_in word_;
+        enyx::hfp::hls::dma_user_channel_data_in word__;
         enyx::oe::nxaccess_hw_algo::user_dma_update_instrument_configuration tmp;
 
         std::istringstream ss(content);
@@ -196,13 +200,17 @@ private:
         tmp.instrument_id =  enyx::get_from_hex_stream_as<uint32_t>(ss);
 
         tmp.enabled =  enyx::get_from_hex_stream_as<uint16_t>(ss);
-        enyx::oe::nxaccess_hw_algo::write_word(tmp, word1.data, 1);
-        result.write(word1);
-        enyx::oe::nxaccess_hw_algo::write_word(tmp, word2.data, 2);
-        result.write(word2);
-        enyx::oe::nxaccess_hw_algo::write_word(tmp, word3.data, 3);
-        word3.last= 1;
-        result.write(word3);
+
+        // convert input DMA message to 3 words as it would come into the FPGA
+        for(int i = 1; i <= 3; ++i) 
+        {
+            enyx::hfp::hls::dma_user_channel_data_out word;
+            enyx::hfp::hls::dma_user_channel_data_in out;
+            enyx::oe::nxaccess_hw_algo::InstrumentConfiguration::write_word(tmp, word, i);
+            out.data(127,0) = word.data(127,0);
+            out.last = word.last;
+            result.write(out);
+        }
     }
 
     /// feeds trigger_command_axi stream from file
