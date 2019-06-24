@@ -69,6 +69,14 @@ operator<<(std::ostream& os, const TickToTradeNotificationMessage& v) {
 
 std::ostream&
 operator<<(std::ostream& os, const InstrumentConfiguration& v) {
+    os << "t2c_threshold: " << v.tick_to_cancel_threshold
+       << " t2t_bid_price: " << v.tick_to_trade_bid_price
+       << " t2t_ask_price: " << v.tick_to_trade_ask_price
+       << " instrument_id: " << v.instrument_id
+       << " t2t_bid_collection_id: " << v.tick_to_trade_bid_collection_id
+       << " t2c_collection_id: " << v.tick_to_cancel_collection_id
+       << " t2t_ask_collection_id: " << v.tick_to_trade_ask_collection_id
+       << " enabled: " << int(v.enabled);
     return os;
 }
 
