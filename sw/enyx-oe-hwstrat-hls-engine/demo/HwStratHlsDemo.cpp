@@ -52,7 +52,6 @@ void quit(const std::error_code & failure = std::error_code{}) {
     signalExit();
 }
 
-
 // Transform type to string
 template <typename T>
 std::string
@@ -62,14 +61,14 @@ toStr(const T& v) {
     return ss.str();
 }
 
+constexpr uint64_t PriceFactor = 10000000000;
+
 } // namespace
 /// [ExitHandler]
 
 /// [HandlerDefinition]
 namespace enyx {
 namespace example {
-
-
 
 /**
  *  @brief Handler use to receive response messages from the algorithm.
@@ -115,13 +114,23 @@ struct OrderHandler : public oe::hwstrat::demo::Handler {
 int main(int argc, char* argv[]) {
 
     // Check arguments.
-    if (argc != 2) {
-        LOG_ME(NX_WARNING, "[%s] usage: %s BOARD_INDEX",
+    if (argc != 5) {
+        LOG_ME(NX_CRITICAL, "[%s] usage: %s <board_id> <instrument_id>"
+            " <tick_to_cancel_threshold> <tick_to_cancel_collection_id>",
             LogPrefix, argv[0]);
+        LOG_ME(NX_CRITICAL, "[%s]         Configure the tick to cancel HLS core.", LogPrefix);
+        LOG_ME(NX_CRITICAL, "[%s]          - instrument_id: enyx internal instrument id to monitor.", LogPrefix);
+        LOG_ME(NX_CRITICAL, "[%s]          - tick_to_cancel_threshold: Price threshold"
+            " that will trigger the collection (double).", LogPrefix);
+        LOG_ME(NX_CRITICAL, "[%s]          - tick_to_cancel_collection_id: collection"
+            " to trigger.", LogPrefix);
         return EXIT_FAILURE;
     }
 
     const std::uint16_t boardIndex = std::atoi(argv[1]);
+    const uint32_t instrId = std::atoi(argv[2]);
+    const double threshold = std::atof(argv[3]);
+    const uint16_t collectionId = std::atoi(argv[4]);
 
 /// [Main]
     try {
@@ -138,6 +147,25 @@ int main(int argc, char* argv[]) {
         LOG_ME(NX_INFO, "[%s] Registering signals.", LogPrefix);
         std::signal(SIGINT, &signalExit);
         std::signal(SIGTERM, &signalExit);
+
+        // Sending configuration
+        hwstrat::demo::InstrumentConfiguration conf;
+        conf.tick_to_cancel_threshold = threshold*PriceFactor;
+        conf.instrument_id = instrId;
+        conf.tick_to_cancel_collection_id = collectionId;
+        conf.enabled = 1;
+
+        conf.tick_to_trade_bid_collection_id = 0;
+        conf.tick_to_trade_ask_collection_id = 0;
+        conf.tick_to_trade_bid_price = 0;
+        conf.tick_to_trade_ask_price = 0;
+
+        LOG_ME(NX_INFO, "[%s] Sending Tick To Cancel Configuration: %s",
+            LogPrefix, toStr(conf).c_str())
+        const auto err = algorithm.sendConfiguration(conf);
+        if (err) {
+            throw std::runtime_error("Unable to send configuration: " + err.message());
+        }
 
         LOG_ME(NX_INFO, "[%s] Send CTRL-C to quit.", LogPrefix);
         /// Start dispatching of algorithm from_fpga.
