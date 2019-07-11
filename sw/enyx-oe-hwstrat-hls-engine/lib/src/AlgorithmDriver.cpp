@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <cstring>
 
 #include <libhfp/mm.hpp>
@@ -22,6 +24,22 @@ namespace oe {
 namespace hwstrat {
 namespace demo {
 
+std::string get_hex_string(const std::uint8_t * data, std::uint32_t size ) {
+    std::stringstream out;
+    for(std::size_t i = 0 ; i < size; ++i){
+        out << std::hex << std::setfill('0') << std::setw(2) << uint32_t(data[i]);
+    }
+
+    return out.str();
+}
+
+template<typename MessageType>
+std::string get_hex_string(MessageType const& message) {
+    const uint8_t * data = reinterpret_cast<const uint8_t*>(&message);
+    return get_hex_string(data, sizeof(MessageType));
+}
+
+
 namespace {
 
 constexpr std::uint32_t MMDeviceId = 0;
@@ -34,6 +52,10 @@ sendToFpga(::hfp::tx & tx,
            Setting const& setting)
 {
     int failure;
+
+    // This log can potentially impact performance, so please remove it for production use.
+    LOG_ME(NX_INFO, "[%s] Raw content of message to be sent: %s",
+         LogPrefix, get_hex_string(setting).c_str());
 
     //TODO: stop condition
     while ((failure = tx.send(&setting, sizeof(setting))) && errno == EAGAIN)
@@ -65,6 +87,10 @@ struct AlgorithmDriver::Impl {
             handler_.onError(make_error_code(CORRUPTED_APPLICATION_HEADER));
             return;
         }
+
+        // This log can potentially impact performance, so please remove it for production use.
+        LOG_ME(NX_INFO, "[%s] Raw content of received message : %s",
+             LogPrefix, get_hex_string(data, size).c_str());
 
         const auto * header = reinterpret_cast<const HeaderType*>(data);
 
