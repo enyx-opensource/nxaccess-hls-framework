@@ -98,10 +98,11 @@ struct AlgorithmDriver::Impl {
         if (header->length != size
                 || header->version != APPLICATION_VERSION) {
             LOG_ME(NX_CRITICAL, "[%s] Corrupted application header: version: %d"
-                " length: %d  buffer size: %d",
-                 LogPrefix, header->version, header->length, size);
-            handler_.onError(make_error_code(CORRUPTED_APPLICATION_HEADER));
-            return;
+                " length: %d  buffer size: %d   source: %d",
+                 LogPrefix, header->version, header->length, size, header->source);
+//           TODO reenable this once HLS is patched to produce the right size
+//            handler_.onError(make_error_code(CORRUPTED_APPLICATION_HEADER));
+//            return;
         }
 
         switch (static_cast<ModulesIds>(header->source)) {
@@ -151,11 +152,16 @@ AlgorithmDriver::sendConfiguration(const InstrumentConfiguration & conf) {
     assert(impl_);
     InstrumentConfigurationMessage update;
     // Header
+    // important, because hardware filters on some values here, see configuration.cpp:217
+    // HLS expects version 1, msgtype 1 for config, dest = 8
     update.header.version = APPLICATION_VERSION;
     update.header.dest = static_cast<uint8_t>(ModulesIds::InstrumentDataConfiguration);
-    update.header.msg_type = 0; // TODO: not currently used
+
+    update.header.msg_type = 1; // hardware filters on it.
+    update.header.reserved = 0;
     update.header.ack_request = 1;
-    update.header.timestamp = 0;
+
+    update.header.timestamp = 0x12345678; // dumb value for timestamping.
     update.header.length = sizeof(update);
 
     //body
