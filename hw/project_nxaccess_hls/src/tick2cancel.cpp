@@ -97,7 +97,21 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 // Here, we do nothing, as we don't know what to do
                 // std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                 // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
+                user_dma_tick2cancel_notification notification;
+                fill_header(notification, AlgoCancelledOnAskSide);
+                //applicative layer
+                notification.sent_collection_id = nxbus_word_in.opcode;
+                notification.trade_summary_price = nxbus_word_in.price;
+                notification.book_top_level_price = nxbus_word_in.data0;
+                notification.instrument_id = nxbus_word_in.instr_id;
+                notification.threshold = nxbus_word_in.data1;
+                notification.is_bid = 0;
+                tick2cancel_notification_out.write(notification);
+
+                book_req_out.write(0); // always asks for book 0
             }
+
+
         } else {
             // std::cout << "nxbus input was empty" << std::endl;
         }
@@ -169,6 +183,18 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 notification.is_bid = 0; 
                 tick2cancel_notification_out.write(notification);
 
+            }
+            else {
+                user_dma_tick2cancel_notification notification;
+                fill_header(notification, AlgoCancelledOnAskSide);
+                //applicative layer
+                notification.sent_collection_id = trigger_config.tick_to_cancel_collection_id;
+                notification.trade_summary_price = pending_nxbus_data.price;
+                notification.book_top_level_price = book.ask_toplevel_price + trigger_config.tick_to_cancel_threshold;
+                notification.instrument_id = trigger_config.enabled;
+                notification.threshold = trigger_config.tick_to_cancel_threshold;
+                notification.is_bid = (pending_nxbus_data.price >= book.ask_toplevel_price + trigger_config.tick_to_cancel_threshold);
+                tick2cancel_notification_out.write(notification);
             }
 
             //whatever happen (trigger or not), we must change to IDLE, as we are ready
