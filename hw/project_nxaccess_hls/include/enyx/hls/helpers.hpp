@@ -154,7 +154,7 @@ assert_eq(Expected const& expected, Actual const& actual,
                   << "Got:\n\t " << actual
                   << std::endl;
 
-        std::abort();
+//        std::abort();
     }
 }
 
