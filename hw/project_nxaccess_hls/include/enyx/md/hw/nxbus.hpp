@@ -43,20 +43,22 @@ struct nxbus_meta_sizes {
 // C++ allows offsetof() to get the offset of the BYTE-aligned sturct, representing bit-aligned FPGA struct
 #pragma pack(1) // ensure C++ packs structures correclty
 struct nxbus_meta_struct{
-    char NXBUS_SIZE_END_OF_EXTRA[nxbus_meta_sizes::NXBUS_SIZE_END_OF_EXTRA];
-    char NXBUS_SIZE_MARKET_INTERNAL_ID[4];
-    char NXBUS_SIZE_OPCODE[8];
-    char NXBUS_SIZE_ORDER_ID[64];
-    char NXBUS_SIZE_SIDE_BUYNSELL[1];
-    char NXBUS_SIZE_QTY[32];
-    char NXBUS_SIZE_PRICE[64];
-    char NXBUS_SIZE_TIMESTAMP[32];
-    char NXBUS_SIZE_INSTR_ASCII[128];
-    char NXBUS_SIZE_INSTR_BIN[32];
-    char NXBUS_SIZE_INSTR_ID[24];
-    char NXBUS_SIZE_DATA0[64];
-    char NXBUS_SIZE_DATA1[32];
+
     char NXBUS_SIZE_DATA2[64];
+    char NXBUS_SIZE_DATA1[32];
+    char NXBUS_SIZE_DATA0[64];
+    char NXBUS_SIZE_INSTR_ID[24];
+    char NXBUS_SIZE_INSTR_BIN[32];
+    char NXBUS_SIZE_INSTR_ASCII[128];
+    char NXBUS_SIZE_TIMESTAMP[32];
+    char NXBUS_SIZE_PRICE[64];
+    char NXBUS_SIZE_QTY[32];
+    char NXBUS_SIZE_SIDE_BUYNSELL[1];
+    char NXBUS_SIZE_ORDER_ID[64];
+    char NXBUS_SIZE_OPCODE[8];
+    char NXBUS_SIZE_MARKET_INTERNAL_ID[4];
+    char NXBUS_SIZE_END_OF_EXTRA[nxbus_meta_sizes::NXBUS_SIZE_END_OF_EXTRA];
+
     char NXBUS_EXTRA_DATA_MAX_SIZE[256];
 };
 
