@@ -11,12 +11,12 @@ namespace demo {
 std::ostream&
 operator<<(std::ostream& os, const FpgaToCpuHeader& v) {
     os  << "[ "
-        << " version: " << v.version
-        << " source: " << v.source
-        << " msg_type: " << v.msg_type
-        << " error: " << v.error
+        << " version: " << uint32_t(v.version)
+        << " source: " << uint32_t(v.source)
+        << " msg_type: " << uint32_t(v.msg_type)
+        << " error: " << uint32_t(v.error)
         << " timestamp: " << v.timestamp
-        << " length: " << v.length
+        << " length: " << uint32_t(v.length)
         << " ]";
     return os;
 }
@@ -32,7 +32,7 @@ operator<<(std::ostream& os, const InstrumentConfigurationMessage&) {
 std::ostream&
 operator<<(std::ostream& os, const InstrumentConfigurationAckMessage& v) {
     os << v.header
-       << " enabled: " <<  v.enabled
+       << " enabled: " <<  uint32_t(v.enabled)
        << " instrument_id: " << v.instrument_id
        << " tick_to_cancel_threshold: " << v.tick_to_cancel_threshold
        << " tick_to_cancel_collection_id: " << v.tick_to_cancel_collection_id
@@ -63,7 +63,7 @@ operator<<(std::ostream& os, const TickToTradeNotificationMessage& v) {
        <<  " threshold_price:" << v.threshold_price
        <<  " instrument_id" << v.instrument_id
        <<  " sent_collection_id:" << v.sent_collection_id
-       <<  " is_bid:" << v.is_bid;
+       <<  " is_bid:" << uint32_t(v.is_bid);
     return os;
 }
 
