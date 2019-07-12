@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
         // Instantiate our handler.
         enyx::example::OrderHandler myHandler;
 
-        LOG_ME(NX_INFO, "[%s] Working on board %d", LogPrefix, boardIndex)
+        LOG_ME(NX_INFO, "[%s] Working on board %d", LogPrefix, boardIndex);
         hwstrat::demo::AlgorithmDriver algorithm{myHandler,
                                                  boardIndex};
 
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
         conf.tick_to_trade_ask_price = 0;
 
         LOG_ME(NX_INFO, "[%s] Sending Tick To Cancel Configuration: %s",
-            LogPrefix, toStr(conf).c_str())
+            LogPrefix, toStr(conf).c_str());
         const auto err = algorithm.sendConfiguration(conf);
         if (err) {
             throw std::runtime_error("Unable to send configuration: " + err.message());
