@@ -104,11 +104,11 @@ struct nxbus_to_decision {} ;
    // dma_notification_arbiter_type::p_arbitrate(notifications_to_cpu, user_dma_channel_data_out);
 
    // data buses for notifications; as notifying to the DMA can be a long process, we set 32 items as depth for these FIFOs
-   hls::stream<algo::user_dma_update_instrument_configuration_ack> config_to_notifs;
+   static hls::stream<algo::user_dma_update_instrument_configuration_ack> config_to_notifs;
    #pragma HLS STREAM variable=config_to_notifs depth=4
-   hls::stream<algo::user_dma_tick2trade_notification> tick2trade_to_notifs;
+   static hls::stream<algo::user_dma_tick2trade_notification> tick2trade_to_notifs;
    #pragma HLS STREAM variable=tick2trade_to_notifs depth=4
-   hls::stream<algo::user_dma_tick2cancel_notification> tick2cancel_to_notifs;
+   static hls::stream<algo::user_dma_tick2cancel_notification> tick2cancel_to_notifs;
    #pragma HLS STREAM variable=tick2cancel_to_notifs depth=4
 
 
