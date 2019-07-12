@@ -91,11 +91,15 @@ private:
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, //tcp_replies_in,
                                  &instrument_count);
         }
-        const int TOTAL_LATENCY = 10;
+        const int TOTAL_LATENCY = 1000;
         for(int i = 0 ; i < TOTAL_LATENCY; ++i)
         {
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, //tcp_replies_in,
                              &instrument_count);
+
+            if (!dma_data_out.empty()) {
+                   enyx::hfp::hls::dma_user_channel_data_out r =  dma_data_out.read();
+            }
         }
 
         while(!nxbus_in.empty())
@@ -114,9 +118,9 @@ private:
             std::cout << "[TEST] Trigger output compared successfully ! \n";
         }
 
-        for(int i  = 0 ; i < 10; ++i) {
-            while (!dma_data_out.empty())
-                dma_data_out.read();
+        while (!dma_data_out.empty()) {
+           enyx::hfp::hls::dma_user_channel_data_out r =  dma_data_out.read();
+
         }
 
 
