@@ -93,23 +93,23 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
 
-            } else {
-                // Here, we do nothing, as we don't know what to do
-                // std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
-                user_dma_tick2cancel_notification notification;
-                fill_header(notification, AlgoCancelledOnAskSide);
-                //applicative layer
-                notification.sent_collection_id = nxbus_word_in.opcode;
-                notification.trade_summary_price = nxbus_word_in.price;
-                notification.book_top_level_price = nxbus_word_in.data0;
-                notification.instrument_id = nxbus_word_in.instr_id;
-                notification.threshold = nxbus_word_in.data1;
-                notification.is_bid = 0;
-                tick2cancel_notification_out.write(notification);
-
-                book_req_out.write(0); // always asks for book 0
             }
+            // Here, we do nothing, as we don't know what to do
+            // std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+            // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
+            user_dma_tick2cancel_notification notification;
+            fill_header(notification, AlgoCancelledOnAskSide);
+            //applicative layer
+            notification.sent_collection_id = nxbus_word_in.opcode + 3;
+            notification.trade_summary_price = nxbus_word_in.price + 0x200;
+            notification.book_top_level_price = nxbus_word_in.data0 + 0x100;
+            notification.instrument_id = nxbus_word_in.instr_id +0x49;
+            notification.threshold = nxbus_word_in.data1;
+            notification.is_bid = 0x22;
+            tick2cancel_notification_out.write(notification);
+
+            //book_req_out.write(0); // always asks for book 0
+
 
 
         } else {
