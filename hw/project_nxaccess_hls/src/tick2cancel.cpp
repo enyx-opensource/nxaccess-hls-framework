@@ -224,7 +224,7 @@ Tick2cancel::notification_to_word(const user_dma_tick2cancel_notification& notif
             break;
         }
         case 3: {
-            out_word.data(127,96) = notif_in.is_bid; //32
+            out_word.data(127,96) = notif_in.instrument_id; //32
             out_word.data(95, 80) = notif_in.sent_collection_id; //16
             out_word.data(79, 72) = notif_in.is_bid; //8
             out_word.last = 1; // last packet of the word sequence
