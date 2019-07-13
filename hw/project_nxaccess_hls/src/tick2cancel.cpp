@@ -52,6 +52,9 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
     // Keep in mind this structure is about 550bits
     static nxmd::nxbus pending_nxbus_data;
 
+    static bool is_end_of_extra = true; // assume previous message contains end of extra
+#pragma HLS RESET variable=is_end_of_extra
+
     static enum {READY,  // Waiting for nxbus trigger
                  WAITING_FOR_INSTRUMENT_CONF_AND_BOOKS_DATA // Waiting for memory read
                 } current_state;
@@ -75,6 +78,8 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
             //     return ;
             // }
 
+            // TODO check that is_end_of_extra == true (means previous message was the end of sequence) before
+            // interpreting opcodes.
             if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
 
                 std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
@@ -105,11 +110,12 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
             notification.book_top_level_price = nxbus_word_in.data0 + 0x100;
             notification.instrument_id = nxbus_word_in.instr_id +0x49;
             notification.threshold = nxbus_word_in.data1;
-            notification.is_bid = 0x22;
+            notification.is_bid = is_end_of_extra;
             tick2cancel_notification_out.write(notification);
 
             //book_req_out.write(0); // always asks for book 0
 
+            is_end_of_extra = nxbus_word_in.end_of_extra; // keep this information in memory for next message
 
 
         } else {
