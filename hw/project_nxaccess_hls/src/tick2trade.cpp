@@ -56,36 +56,44 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 } current_state;
     #pragma HLS RESET variable=current_state
 
+    static bool is_end_of_extra = true; // at start, assume previous message contains end of extra
+    #pragma HLS RESET variable=is_end_of_extra
+
     switch(current_state){
     case READY: {
         if (! nxbus_axi_in.empty()) {
             nxmd::nxbus nxbus_word_in = static_cast<nxmd::nxbus>(nxbus_axi_in.read());
 
-            // User could do some instrument filtering for this strategy here but
-            // in this Demonstration it is considered that all the feed handler is 
-            // configured to publish updates only on the desired instruments:
-            // if (not_subscribed(nxbus_word_in.instr_id) {
-            //     return ;
-            // }
+            if(is_end_of_extra) {
 
-            if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
+                // User could do some instrument filtering for this strategy here but
+                // in this Demonstration it is considered that all the feed handler is
+                // configured to publish updates only on the desired instruments:
+                // if (not_subscribed(nxbus_word_in.instr_id) {
+                //     return ;
+                // }
 
-                std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                            << "Processing : Misc Input Info message  seqnum=" << nxbus_word_in.data0 << std::endl;
+                if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
 
-            } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
+                    std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+                                << "Processing : Misc Input Info message  seqnum=" << nxbus_word_in.data0 << std::endl;
 
-                std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                            << "Processing : Trade Summary message price=" << nxbus_word_in.price << std::endl;
+                } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
 
-                pending_nxbus_data = nxbus_word_in; // Save current trade summary
-                instrument_data_req.write(nxbus_word_in.instr_id); // Request the instrument's configuration
-                current_state = WAITING_FOR_INSTRUMENT_CONF_AND_BOOKS_DATA; // Update state
-                book_req_out.write(nxbus_word_in.instr_id);
-            } else {
-                // Here, we do nothing, as we don't know what to do
-                // std::cout << "[trade] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
+                    std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+                                << "Processing : Trade Summary message price=" << nxbus_word_in.price << std::endl;
+
+                    pending_nxbus_data = nxbus_word_in; // Save current trade summary
+                    instrument_data_req.write(nxbus_word_in.instr_id); // Request the instrument's configuration
+                    current_state = WAITING_FOR_INSTRUMENT_CONF_AND_BOOKS_DATA; // Update state
+                    book_req_out.write(nxbus_word_in.instr_id);
+                } else {
+                    // Here, we do nothing, as we don't know what to do
+                    // std::cout << "[trade] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+                    // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
+                }
+
+                is_end_of_extra = nxbus_word_in.end_of_extra; // keep this information in memory for next message
             }
         } else {
             //        std::cout << "nxbus input was empty" << std::endl;
