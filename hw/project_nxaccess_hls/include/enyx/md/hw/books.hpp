@@ -126,6 +126,8 @@ public: // public data
         nxbus nxbus_word_in;
         #pragma HLS DATA_PACK variable=nxbus_word_in
 
+        //TODO handle end_of_extra in this process
+
         if (! nxbus_in.empty()) {
             nxbus_data_in = nxbus_in.read();
             nxbus_word_in = static_cast<nxbus>(nxbus_data_in);
