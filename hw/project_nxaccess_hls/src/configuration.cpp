@@ -275,7 +275,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
             ack.header.version = 1;
             ack.header.source = enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration;
             ack.header.msg_type = InstrumentConfiguration::UpdateInstrumentData; // only notifications
-            ack.header.length = 0x6513; //unused here, shall be needed for retrocompat'. We put here a dump value.
+            ack.header.length = sizeof(user_dma_update_instrument_configuration_ack); //unused here, shall be needed for retrocompat'. We put here a dump value.
             //applicative layer 
             ack.instrument_id = current_dma_message_read.instrument_id;
             ack.enabled = current_dma_message_read.enabled;
