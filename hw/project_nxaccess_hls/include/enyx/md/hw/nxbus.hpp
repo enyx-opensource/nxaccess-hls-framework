@@ -86,7 +86,10 @@ struct nxbus {
     nxbus() {} // default
 
     /// Conversion operator from AXI bus
-    nxbus(nxbus_axi const arg) {
+    nxbus(nxbus_axi const _arg) {
+        nxbus_axi arg;
+        arg = _arg;
+        arg.data.reverse(); // inverse the bits
         ARG_TO_MEMBER(end_of_extra, NXBUS_SIZE_END_OF_EXTRA) ;
         ARG_TO_MEMBER(market_internal_id, NXBUS_SIZE_MARKET_INTERNAL_ID) ;
         ARG_TO_MEMBER(opcode, NXBUS_SIZE_OPCODE) ;
@@ -121,7 +124,7 @@ struct nxbus {
         MEMBER_TO_ARG(data0, NXBUS_SIZE_DATA0) ;
         MEMBER_TO_ARG(data1, NXBUS_SIZE_DATA1) ;
         MEMBER_TO_ARG(data2, NXBUS_SIZE_DATA2) ;
-
+        // TODO inverse the bits.
 
         return arg;
     }
