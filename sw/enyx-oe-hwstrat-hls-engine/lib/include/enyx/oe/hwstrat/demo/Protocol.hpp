@@ -40,9 +40,9 @@ struct ENYX_PACKED_STRUCT FpgaToCpuHeader {
     uint8_t source:4;  /// source fpga module id
     uint8_t version:4;     /// message format version
     // second byte
-    uint8_t msg_type:4;  /// message_type
     uint8_t error:1;     /// error bit in case message is not processed correctly
     uint8_t reserved:3;     /// ack
+    uint8_t msg_type:4;  /// message_type
 
     uint32_t timestamp;   /// future use : hw timestamp, unused for now.
     uint16_t length;    /// message format version
