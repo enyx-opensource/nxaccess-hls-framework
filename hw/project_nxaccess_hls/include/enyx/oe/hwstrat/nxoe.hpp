@@ -139,6 +139,7 @@ static void
         output_trigger.arg4 = arg4;
         trigger_command_axi output = static_cast<trigger_command_axi>(output_trigger);
         output.last = 1;
+        output.data.reverse();
         trigger_axibus_out.write(output);
     }
 
