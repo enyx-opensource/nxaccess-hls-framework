@@ -78,43 +78,43 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
             //     return ;
             // }
 
-            // TODO check that is_end_of_extra == true (means previous message was the end of sequence) before
-            // interpreting opcodes.
-            if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
+            if(is_end_of_extra) { // if previous burst is the end of a burst sequence
 
-                std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                            << "Processing : Misc Input Info message seqnum=" << nxbus_word_in.data0 << std::dec << std::endl;
+                if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
 
-            } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
+                    std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+                                << "Processing : Misc Input Info message seqnum=" << nxbus_word_in.data0 << std::dec << std::endl;
 
-                std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                            << "Processing : Trade Summary message price=" << nxbus_word_in.price
-                            << " -> request to book memory & configuration "
-                            << std::dec << std::endl;
+                } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
 
-                pending_nxbus_data = nxbus_word_in; // Save current trade summary
-                instrument_data_req.write(nxbus_word_in.instr_id); // Request the instrument's configuration
-                current_state = WAITING_FOR_INSTRUMENT_CONF_AND_BOOKS_DATA; // Update state
+                    std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+                                << "Processing : Trade Summary message price=" << nxbus_word_in.price
+                                << " -> request to book memory & configuration "
+                                << std::dec << std::endl;
 
-                book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
+                    pending_nxbus_data = nxbus_word_in; // Save current trade summary
+                    instrument_data_req.write(nxbus_word_in.instr_id); // Request the instrument's configuration
+                    current_state = WAITING_FOR_INSTRUMENT_CONF_AND_BOOKS_DATA; // Update state
 
+                    book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
+
+                }
+                // Here, we do nothing, as we don't know what to do
+                // std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
+                // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
+                user_dma_tick2cancel_notification notification;
+                fill_header(notification, AlgoCancelledOnAskSide);
+                //applicative layer
+                notification.sent_collection_id = nxbus_word_in.opcode + 3;
+                notification.trade_summary_price = nxbus_word_in.price + 0x200;
+                notification.book_top_level_price = nxbus_word_in.data0 + 0x100;
+                notification.instrument_id = nxbus_word_in.instr_id +0x49;
+                notification.threshold = nxbus_word_in.data1;
+                notification.is_bid = is_end_of_extra;
+                tick2cancel_notification_out.write(notification);
+
+                //book_req_out.write(0); // always asks for book 0
             }
-            // Here, we do nothing, as we don't know what to do
-            // std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-            // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
-            user_dma_tick2cancel_notification notification;
-            fill_header(notification, AlgoCancelledOnAskSide);
-            //applicative layer
-            notification.sent_collection_id = nxbus_word_in.opcode + 3;
-            notification.trade_summary_price = nxbus_word_in.price + 0x200;
-            notification.book_top_level_price = nxbus_word_in.data0 + 0x100;
-            notification.instrument_id = nxbus_word_in.instr_id +0x49;
-            notification.threshold = nxbus_word_in.data1;
-            notification.is_bid = is_end_of_extra;
-            tick2cancel_notification_out.write(notification);
-
-            //book_req_out.write(0); // always asks for book 0
-
             is_end_of_extra = nxbus_word_in.end_of_extra; // keep this information in memory for next message
 
 
