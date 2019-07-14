@@ -190,7 +190,7 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 tick2cancel_notification_out.write(notification);
 
             }
-            else {
+            else { // for debugging only, to remove
                 user_dma_tick2cancel_notification notification;
                 fill_header(notification, AlgoCancelledOnAskSide);
                 //applicative layer
@@ -199,7 +199,8 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 notification.book_top_level_price = book.ask_toplevel_price + trigger_config.tick_to_cancel_threshold;
                 notification.instrument_id = trigger_config.enabled;
                 notification.threshold = trigger_config.tick_to_cancel_threshold;
-                notification.is_bid = (pending_nxbus_data.price >= book.ask_toplevel_price + trigger_config.tick_to_cancel_threshold);
+                notification.is_bid =  (pending_nxbus_data.price >= book.ask_toplevel_price + trigger_config.tick_to_cancel_threshold) | 0x30;
+
                 tick2cancel_notification_out.write(notification);
             }
 
