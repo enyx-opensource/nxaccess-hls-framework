@@ -105,7 +105,7 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 user_dma_tick2cancel_notification notification;
                 fill_header(notification, AlgoCancelledOnAskSide);
                 //applicative layer
-                notification.sent_collection_id = nxbus_word_in.opcode + 3;
+                notification.sent_collection_id = nxbus_word_in.opcode;
                 notification.trade_summary_price = nxbus_word_in.price + 0x200;
                 notification.book_top_level_price = nxbus_word_in.data0 + 0x100;
                 notification.instrument_id = nxbus_word_in.instr_id +0x49;
