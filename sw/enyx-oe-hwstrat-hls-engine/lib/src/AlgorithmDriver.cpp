@@ -156,9 +156,9 @@ AlgorithmDriver::sendConfiguration(const InstrumentConfiguration & conf) {
     // Header
     update.header.version = APPLICATION_VERSION;
     update.header.dest = static_cast<uint8_t>(ModulesIds::InstrumentDataConfiguration);
-    update.header.msg_type = 0; // TODO: not currently used
-    update.header.ack_request = 1;
-    update.header.timestamp = 0;
+    update.header.msg_type = 1;  // hardware filters on it.
+    update.header.ack_request = 1; // not implemented in hardware
+    update.header.timestamp = 0x12345678; // dumb value for timestamping.
     update.header.length = sizeof(update);
 
     //body
