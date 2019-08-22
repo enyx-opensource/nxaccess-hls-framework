@@ -16,6 +16,9 @@
 #include <libhfp/error.hpp>
 #include <enyx/utils/log/macros.hpp>
 
+#define _BSD_SOURCE
+#include <endian.h>
+
 #include <enyx/oe/hwstrat/demo/Handler.hpp>
 #include <enyx/oe/hwstrat/demo/ErrorCode.hpp>
 
@@ -95,7 +98,7 @@ struct AlgorithmDriver::Impl {
         const auto * header = reinterpret_cast<const HeaderType*>(data);
 
         // Sanity check
-        if (header->length != size
+        if (be16toh(header->length) != size
                 || header->version != APPLICATION_VERSION) {
             LOG_ME(NX_CRITICAL, "[%s] Corrupted application header: version: %d"
                 " length: %d  buffer size: %d",
