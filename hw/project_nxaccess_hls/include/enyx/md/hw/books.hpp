@@ -142,7 +142,7 @@ public: // public data
                     output.book_index = nxbus_word_in.instr_id;
                     output.side = nxbus_word_in.buy_nsell;
                     output.toplevel_price = nxbus_word_in.price;
-                    book_update_request.write(output);
+                    book_update_request_out.write(output);
                 }
             }
             is_end_of_extra = nxbus_word_in.end_of_extra; // keep EoE value for next
