@@ -26,11 +26,14 @@ namespace hwstrat {
 
 #pragma pack(1)
 struct cpu2fpga_header {
+    // first byte
     uint8_t version:4;     /// message format version
     uint8_t dest:4;      /// source fpga module id
+    // second byte
     uint8_t msg_type:4;    /// message_type, defined per module
     uint8_t ack_request:1; /// Ack message request (1 = want ack)
     uint8_t reserved:3;       ///
+    // third byte
     uint32_t timestamp;   /// future use : hw timestamp, unused by soft
     uint16_t length;    /// message format version
 
@@ -51,13 +54,15 @@ struct cpu2fpga_header {
 
 #pragma pack(1)
 struct fpga2cpu_header {
+    //first byte
     uint8_t version:4;     /// message format version
     uint8_t source:4;  /// source fpga module id
+    //second byte
     uint8_t msg_type:4;  /// message_type
     uint8_t error:1;     /// error bit in case message is not processed correctly
     uint8_t reserved:3;     /// ack
 
-
+    // third byte
     uint32_t timestamp;   /// future use : hw timestamp, unused for now.
     uint16_t length;    /// message format version
 };
