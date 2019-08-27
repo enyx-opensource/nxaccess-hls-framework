@@ -1,9 +1,41 @@
-# configurations sent to FPGA
+# # instrument data update sent to FPGA
+#--------------------------------------
+#            32b   16b         64b              64b              64b         32b    16b  16b  16b  8b
+# 1 8 1 0 XXXXXXXX XXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXX XXXX XXXX XXXX XX
+# | | | |    |      |          |                |                |            |      |    |    |   |
+# | | | |    |      |          |                |                |            |      |    |    |   +-- enabled
+# | | | |    |      |          |                |                |            |      |    |    |
+# | | | |    |      |          |                |                |            |      |    |    +-- tick_to_trade_ask_collection_id
+# | | | |    |      |          |                |                |            |      |    |
+# | | | |    |      |          |                |                |            |      |    +-- tick_to_cancel_collection_id
+# | | | |    |      |          |                |                |            |      |
+# | | | |    |      |          |                |                |            |      +-- tick_to_trade_bid_collection_id
+# | | | |    |      |          |                |                |            |
+# | | | |    |      |          |                |                |            +-- instrument_id
+# | | | |    |      |          |                |                |
+# | | | |    |      |          |                |                +-- tick_to_trade_ask_price
+# | | | |    |      |          |                |
+# | | | |    |      |          |                +-- tick_to_trade_bid_price
+# | | | |    |      |          |
+# | | | |    |      |          +-- tick_to_cancel_threshold
+# | | | |    |      |
+# | | | |    |      +-- length
+# | | | |    |
+# | | | |    +-- timestamp
+# | | | |
+# | | | |
+# | | | +-- request ack: X000
+# | | |                  |
+# | | |                  |
+# | | |                  +-- 1b1: ack is requested; 1b0: ack is not requested
+# | | |
+# | | +-- msg type: 0b0001
+# | |
+# | |
+# | +-- destination target: 0b1000
+# |
+# +-- version: 0b0001
 
-
-# instrument data update :
-# 2$ is :
-# cpu2fpga_header   | tick_to_cancel_threshold | tick_to_trade_bid_price | tick_to_trade_ask_price |  tick_to_trade_bid_collection_id | tick_to_cancel_collection_id | tick_to_trade_ask_collection_id | instrument_id|enable
 # version 1, module 8, msgtype 1 , ack request = 0 , reserved = 0, timestamp 0x42, length unused yet
 # configuration : tick_to_trade_bid_price = 5$, tick_to_trade_ask_price = 13$
-01 08 01 00 0 42 00   0000000000000000           0000000A7A358200           0000001BF08EB000          0020                         0021                          0022                                0014         1
+1 8 1 0 00000042 0000   0000000000000000           0000000A7A358200           0000001BF08EB000          0020                         0021                          0022                                0014         1
