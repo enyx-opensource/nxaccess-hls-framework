@@ -164,12 +164,25 @@ private:
     convert_string_to_cpu2fpgaheader(enyx::oe::hwstrat::cpu2fpga_header & out,  std::istringstream& in)
     {
         out.version =  enyx::get_from_hex_stream_as<uint16_t>(in);
+        std::cout << "[VERBOSE] out.version: " << std::dec << out.version << std::endl;
+
         out.dest =  enyx::get_from_hex_stream_as<uint16_t>(in);
+        std::cout << "[VERBOSE] out.dest: " << std::dec << out.dest << std::endl;
+
         out.msg_type =  enyx::get_from_hex_stream_as<uint16_t>(in);
+        std::cout << "[VERBOSE] out.msg_type: " << std::dec << out.msg_type << std::endl;
+
         out.ack_request =  enyx::get_from_hex_stream_as<uint16_t>(in);
-        out.reserved =  enyx::get_from_hex_stream_as<uint16_t>(in);
+        std::cout << "[VERBOSE] out.ack_request: " << std::dec << out.ack_request << std::endl;
+
+//        out.reserved =  enyx::get_from_hex_stream_as<uint16_t>(in);
+//        std::cout << "[VERBOSE] out.reserved: " << std::dec << out.reserved << std::endl;
+
         out.timestamp =  enyx::get_from_hex_stream_as<uint32_t>(in);
+        std::cout << "[VERBOSE] out.timestamp: " << std::dec << out.timestamp << std::endl;
+
         out.length =  enyx::get_from_hex_stream_as<uint32_t>(in);
+        std::cout << "[VERBOSE] out.length: " << std::dec << out.length << std::endl;
     }
 
     /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::hls::dma_user_channel_data_in) 
@@ -198,10 +211,10 @@ private:
         tmp.tick_to_cancel_threshold =  enyx::get_from_hex_stream_as<uint64_t>(ss);
         tmp.tick_to_trade_bid_price =  enyx::get_from_hex_stream_as<uint64_t>(ss);
         tmp.tick_to_trade_ask_price =  enyx::get_from_hex_stream_as<uint64_t>(ss);
+        tmp.instrument_id =  enyx::get_from_hex_stream_as<uint32_t>(ss);
         tmp.tick_to_trade_bid_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
         tmp.tick_to_cancel_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
         tmp.tick_to_trade_ask_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
-        tmp.instrument_id =  enyx::get_from_hex_stream_as<uint32_t>(ss);
 
         tmp.enabled =  enyx::get_from_hex_stream_as<uint16_t>(ss);
 
