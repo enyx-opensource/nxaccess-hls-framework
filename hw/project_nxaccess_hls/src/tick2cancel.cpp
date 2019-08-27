@@ -94,6 +94,7 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                     pending_nxbus_data = nxbus_word_in; // Save current trade summary
                     instrument_data_req.write(nxbus_word_in.instr_id); // Request the instrument's configuration
+                    book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
                     current_state = WAITING_FOR_INSTRUMENT_CONF_AND_BOOKS_DATA; // Update state
 
                 } else {
@@ -101,7 +102,7 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                     // std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                     // << "Ignored nxBus command : opcode=" << std::hex << nxbus_word_in.opcode  << std::endl;
                 }
-                book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
+                //book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
 
             }
             is_end_of_extra = nxbus_word_in.end_of_extra; // keep this information in memory for next message
