@@ -22,8 +22,6 @@
 #include "../include/enyx/hls/helpers.hpp"
 #include "../include/enyx/hls/string.hpp"
 
-#include "../include/enyx/hfp/hls/hfp.hpp"
-
 #include "../include/enyx/md/hw/nxbus.hpp"
 #include "../include/enyx/md/hw/string.hpp"
 
@@ -33,6 +31,7 @@
 #include "../src/top.hpp"
 #include "../src/configuration.hpp"
 #include "../src/messages.hpp"
+#include "../include/enyx/hfp/hls/hfp.hpp"
 
 namespace nxoe = enyx::oe::hwstrat;
 using _nxbus = enyx::md::hw::nxbus_axi;
