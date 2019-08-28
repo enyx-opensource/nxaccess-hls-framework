@@ -25,12 +25,23 @@ namespace hfp {
 // Messages received/sent from/to DMA
 #ifndef ENYX_NO_HLS_SUPPORT
 struct dma_user_channel_data_in {
-    ap_uint<128> data;
+
+    static std::size_t const data_width = 128;
+    ap_uint<data_width> data;
+
+    static std::size_t const user_width = 16;
+    ap_uint<user_width> user;
+
     ap_uint<1> last;
 };
-
 struct dma_user_channel_data_out {
-    ap_uint<128> data;
+
+    static std::size_t const data_width = 128;
+    ap_uint<data_width> data;
+
+    static std::size_t const user_width = 16;
+    ap_uint<user_width> user;
+
     ap_uint<1> last;
 };
 #endif
