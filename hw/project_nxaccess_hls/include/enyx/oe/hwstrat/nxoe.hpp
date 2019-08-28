@@ -80,7 +80,10 @@ struct trigger_command {
     trigger_command() {} // default
 
     /// Conversion operator from AXI bus
-    trigger_command(trigger_command_axi const arg) {
+    trigger_command(trigger_command_axi const _arg) {
+    	trigger_command_axi arg;
+    	arg = _arg;
+    	arg.data.reverse(); // reverse bit ordering (end_of_extra is MSB on AXI)
         ARG_TO_MEMBER(collection_id,     TRIGGER_SIZE_COLLECTION_ID) ;
         ARG_TO_MEMBER(valid_arguments, TRIGGER_SIZE_ARGUMENTS) ;
         ARG_TO_MEMBER(arg0,             TRIGGER_SIZE_ARG0) ;
