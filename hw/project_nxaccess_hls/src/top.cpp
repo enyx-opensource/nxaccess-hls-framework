@@ -19,7 +19,7 @@
 #include "../include/enyx/hls/demuxer.hpp"
 #include "../include/enyx/md/hw/books.hpp"
 #include "../include/enyx/oe/hwstrat/helpers.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+
 
 // nxAccess HLS algo demo
 #include "top.hpp"
@@ -29,6 +29,7 @@
 #include "notifications.hpp"
 
 #include "messages.hpp"
+#include "../include/enyx/hfp/hls/hfp.hpp"
 
 using namespace enyx::oe::hwstrat; // use nxAccess HLS framework.
 

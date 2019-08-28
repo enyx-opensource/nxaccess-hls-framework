@@ -17,7 +17,6 @@
 #include <ap_fixed.h>
 #include <hls_stream.h>
 
-#include "../include/enyx/hfp/hls/hfp.hpp"
 #include "../include/enyx/md/hw/nxbus.hpp"
 
 #include "../include/enyx/oe/hwstrat/nxoe.hpp"
@@ -26,6 +25,7 @@
 
 
 #include "messages.hpp"
+#include "../include/enyx/hfp/hls/hfp.hpp"
 #include "configuration.hpp" // for enyx::hfp::hls, FIXME.
 
 namespace nxmd = enyx::md::hw;

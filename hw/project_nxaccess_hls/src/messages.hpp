@@ -144,29 +144,7 @@ enum fpga_modules_ids {
 }
 }
 
-namespace enyx {
-namespace hfp {
-namespace hls {
+#include "../include/enyx/hfp/hls/hfp.hpp"
 
-// This currently needs to be defined here because the Vivado tools
-// loses track of multiple definitions and then cannot cast
-// properly. This is a limitation of the Vivado environment 
-// that will be fixed in future versions.
-
-// Messages received/sent from/to DMA
-#ifndef ENYX_NO_HLS_SUPPORT
-struct dma_user_channel_data_in {
-    ap_uint<128> data;
-    ap_uint<1> last;
-};
-
-struct dma_user_channel_data_out {
-    ap_uint<128> data;
-    ap_uint<1> last;
-};
-#endif
-
-
-}}} // Namespaces
 
 #endif // MESSAGES_HPP

@@ -20,7 +20,6 @@
 #include <hls_stream.h>
 #include <cassert>
 
-#include "../include/enyx/hfp/hls/hfp.hpp"
 #include "../include/enyx/md/hw/nxbus.hpp"
 
 #include "../include/enyx/oe/hwstrat/nxoe.hpp"
@@ -29,6 +28,7 @@
 
 
 #include "messages.hpp"
+#include "../include/enyx/hfp/hls/hfp.hpp"
 #include "notifications.hpp"
 
 /// dependency upon all producing modules. See comments below for this design choice (low latency driven)

@@ -17,9 +17,9 @@
 
 #include "../include/enyx/oe/hwstrat/nxoe.hpp"
 #include "../include/enyx/md/hw/nxbus.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
 
 #include "messages.hpp"
+#include "../include/enyx/hfp/hls/hfp.hpp"
 #include "configuration.hpp"
 
 /// Implements the main process of the decision logic
