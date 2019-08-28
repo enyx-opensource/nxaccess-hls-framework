@@ -144,7 +144,7 @@ enum fpga_modules_ids {
 }
 }
 
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 
 
 #endif // MESSAGES_HPP

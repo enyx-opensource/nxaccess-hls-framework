@@ -29,7 +29,7 @@
 #include "notifications.hpp"
 
 #include "messages.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 
 using namespace enyx::oe::hwstrat; // use nxAccess HLS framework.
 
@@ -46,8 +46,8 @@ static const std::size_t strategy_count = 2;
 
 void
 algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
-                     hls::stream<enyx::hfp::hls::dma_user_channel_data_in>& user_dma_channel_data_in,
-                     hls::stream<enyx::hfp::hls::dma_user_channel_data_out>& user_dma_channel_data_out,
+                     hls::stream<enyx::hfp::dma_user_channel_data_in>& user_dma_channel_data_in,
+                     hls::stream<enyx::hfp::dma_user_channel_data_out>& user_dma_channel_data_out,
                      hls::stream<enyx::oe::hwstrat::trigger_command_axi> & trigger_bus_out,
 //                     hls::stream<enyx::oe::hwstrat::tcp_replies> & tcp_replies_in,
                      uint32_t * supported_instrument_count)
@@ -99,7 +99,7 @@ struct nxbus_to_decision {} ;
 
    // User notification DMA channel : need to arbitrate between configuration module and strategies
    struct dma_notifications{};
-   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +1, enyx::hfp::hls::dma_user_channel_data_out>  dma_notification_arbiter_type;
+   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +1, enyx::hfp::dma_user_channel_data_out>  dma_notification_arbiter_type;
    // static hls::stream<dma_user_channel_data_out> notifications_to_cpu[strategy_count+1]; /// transports algo notification to the DMA
    // #pragma HLS STREAM variable=notifications_to_cpu depth=1
    // dma_notification_arbiter_type::p_arbitrate(notifications_to_cpu, user_dma_channel_data_out);

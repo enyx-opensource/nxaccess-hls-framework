@@ -25,7 +25,7 @@
 
 
 #include "messages.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 
 namespace nxmd = enyx::md::hw;
 namespace nxoe  = enyx::oe::hwstrat;
@@ -34,7 +34,7 @@ namespace enyx {
 namespace oe {
 namespace nxaccess_hw_algo {
 
-using namespace enyx::hfp::hls;
+using namespace enyx::hfp;
 
 
 class InstrumentConfiguration
@@ -70,17 +70,17 @@ class InstrumentConfiguration
     /// Read messages from DMA and store configuration into memory, provide feedback message to DMA
     /// and answers read request to decision blocks
     static void
-    p_handle_instrument_configuration(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & conf_in,
+    p_handle_instrument_configuration(hls::stream<enyx::hfp::dma_user_channel_data_in> & conf_in,
                                                hls::stream<read_instrument_data_request> (& req_in)[2],
                                                hls::stream<instrument_configuration_data_item> (& req_out)[2],
                                                hls::stream<user_dma_update_instrument_configuration_ack> & conf_out);
 
 
-    static void write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::hls::dma_user_channel_data_out& word,  int word_index);
-    static void write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::hls::dma_user_channel_data_out& word, int word_index);
+    static void write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::dma_user_channel_data_out& word,  int word_index);
+    static void write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::dma_user_channel_data_out& word, int word_index);
     
-    static void read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::hls::dma_user_channel_data_in& word, int word_index);
-    static void read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::hls::dma_user_channel_data_in& word,  int word_index);
+    static void read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::dma_user_channel_data_in& word, int word_index);
+    static void read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::dma_user_channel_data_in& word,  int word_index);
 
 
 };

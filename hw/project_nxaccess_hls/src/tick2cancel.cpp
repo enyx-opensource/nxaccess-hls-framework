@@ -188,10 +188,10 @@ Tick2cancel::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
     } // switch
 } // p_algo
 
-enyx::hfp::hls::dma_user_channel_data_out
+enyx::hfp::dma_user_channel_data_out
 Tick2cancel::notification_to_word(const user_dma_tick2cancel_notification& notif_in, int word_index)
 {
-    enyx::hfp::hls::dma_user_channel_data_out out_word; 
+    enyx::hfp::dma_user_channel_data_out out_word;
     
     switch(word_index) {
         case 1: {

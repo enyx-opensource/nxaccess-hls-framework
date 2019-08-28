@@ -25,7 +25,7 @@
 
 
 #include "messages.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 #include "configuration.hpp" // for enyx::hfp::hls, FIXME.
 
 namespace nxmd = enyx::md::hw;
@@ -49,7 +49,7 @@ class Notifications
     p_broadcast_notifications(hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in, 
                               hls::stream<user_dma_tick2trade_notification> &tick2trade_in,
                               hls::stream<user_dma_update_instrument_configuration_ack> &config_acks_in,
-                              hls::stream<enyx::hfp::hls::dma_user_channel_data_out> & conf_out);
+                              hls::stream<enyx::hfp::dma_user_channel_data_out> & conf_out);
 
   
 };
