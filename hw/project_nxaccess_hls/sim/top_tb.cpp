@@ -31,7 +31,7 @@
 #include "../src/top.hpp"
 #include "../src/configuration.hpp"
 #include "../src/messages.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 
 namespace nxoe = enyx::oe::hwstrat;
 using _nxbus = enyx::md::hw::nxbus_axi;
@@ -65,8 +65,8 @@ private:
         hls::stream<_nxbus>                 nxbus_in("nxbus_in");
         hls::stream<_trigger_cmd>           trigger_out("trigger_command");
         //hls::stream<nxoe::tcp_replies>      tcp_replies_in("tcp_replies");
-        hls::stream<enyx::hfp::hls::dma_user_channel_data_in>           dma_data_in("dma_user_channel_data_in");
-        hls::stream<enyx::hfp::hls::dma_user_channel_data_out>          dma_data_out("dma_user_channel_data_out");
+        hls::stream<enyx::hfp::dma_user_channel_data_in>           dma_data_in("dma_user_channel_data_in");
+        hls::stream<enyx::hfp::dma_user_channel_data_out>          dma_data_out("dma_user_channel_data_out");
 
         uint32_t instrument_count           = 0;
 
@@ -97,7 +97,7 @@ private:
                              &instrument_count);
 
             if (!dma_data_out.empty()) {
-                   enyx::hfp::hls::dma_user_channel_data_out r =  dma_data_out.read();
+                   enyx::hfp::dma_user_channel_data_out r =  dma_data_out.read();
             }
         }
 
@@ -118,7 +118,7 @@ private:
         }
 
         while (!dma_data_out.empty()) {
-           enyx::hfp::hls::dma_user_channel_data_out r =  dma_data_out.read();
+           enyx::hfp::dma_user_channel_data_out r =  dma_data_out.read();
 
         }
 
@@ -148,7 +148,7 @@ private:
     }
 
     static void
-    read_dma_config_in_from_file(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & data_in, std::string const& file)
+    read_dma_config_in_from_file(hls::stream<enyx::hfp::dma_user_channel_data_in> & data_in, std::string const& file)
     {
         std::ifstream data_in_file(file.c_str());
         assert(data_in_file);
@@ -184,22 +184,22 @@ private:
         std::cout << "[VERBOSE] out.length: " << std::dec << out.length << std::endl;
     }
 
-    /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::hls::dma_user_channel_data_in) 
+    /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::dma_user_channel_data_in)
     static void
-    convert_string_to_dma_channel_in(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & result, std::string const& content)
+    convert_string_to_dma_channel_in(hls::stream<enyx::hfp::dma_user_channel_data_in> & result, std::string const& content)
     {
         // We want to read :
 //        # cpu2fpga_header   | tick_to_cancel_threshold | tick_to_trade_bid_price | tick_to_trade_ask_price |  tick_to_trade_bid_collection_id | tick_to_cancel_collection_id | tick_to_trade_ask_collection_id | instrument_id|enable
 //        # version 1, module 8, msgtype 1 , ack request = 0 , reserved = 0, timestamp 0x42, length unused yet
 //        01 08 01 00 0 42 00   00000004A817C800           0000000000000000           0000000000000000          0010                               0011                          0012                                0014         1
 
-        enyx::hfp::hls::dma_user_channel_data_out word1;
-        enyx::hfp::hls::dma_user_channel_data_out word2;
-        enyx::hfp::hls::dma_user_channel_data_out word3;
-        enyx::hfp::hls::dma_user_channel_data_in word;
+        enyx::hfp::dma_user_channel_data_out word1;
+        enyx::hfp::dma_user_channel_data_out word2;
+        enyx::hfp::dma_user_channel_data_out word3;
+        enyx::hfp::dma_user_channel_data_in word;
 
-        enyx::hfp::hls::dma_user_channel_data_in word_;
-        enyx::hfp::hls::dma_user_channel_data_in word__;
+        enyx::hfp::dma_user_channel_data_in word_;
+        enyx::hfp::dma_user_channel_data_in word__;
         enyx::oe::nxaccess_hw_algo::user_dma_update_instrument_configuration tmp;
 
         std::istringstream ss(content);
@@ -220,8 +220,8 @@ private:
         // convert input DMA message to 3 words as it would come into the FPGA
         for(int i = 1; i <= 3; ++i) 
         {
-            enyx::hfp::hls::dma_user_channel_data_out word;
-            enyx::hfp::hls::dma_user_channel_data_in out;
+            enyx::hfp::dma_user_channel_data_out word;
+            enyx::hfp::dma_user_channel_data_in out;
             enyx::oe::nxaccess_hw_algo::InstrumentConfiguration::write_word(tmp, word, i);
             out.data(127,0) = word.data(127,0);
             out.last = word.last;

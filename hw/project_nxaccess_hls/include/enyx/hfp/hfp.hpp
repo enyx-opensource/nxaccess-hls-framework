@@ -16,7 +16,6 @@
 
 namespace enyx {
 namespace hfp {
-namespace hls {
 
 // This currently needs to be defined here because the Vivado tools
 // loses track of multiple definitions and then cannot cast
@@ -37,4 +36,4 @@ struct dma_user_channel_data_out {
 #endif
 
 
-}}} // Namespaces
+}} // Namespaces

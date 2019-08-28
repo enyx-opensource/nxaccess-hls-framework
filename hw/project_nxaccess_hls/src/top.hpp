@@ -19,14 +19,14 @@
 #include "../include/enyx/md/hw/nxbus.hpp"
 
 #include "messages.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 #include "configuration.hpp"
 
 /// Implements the main process of the decision logic
 void
 algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
-                     hls::stream<enyx::hfp::hls::dma_user_channel_data_in>& user_dma_channel_data_in,
-                     hls::stream<enyx::hfp::hls::dma_user_channel_data_out>& user_dma_channel_data_out,
+                     hls::stream<enyx::hfp::dma_user_channel_data_in>& user_dma_channel_data_in,
+                     hls::stream<enyx::hfp::dma_user_channel_data_out>& user_dma_channel_data_out,
                      hls::stream<enyx::oe::hwstrat::trigger_command_axi> & trigger_bus_out,
                 //     hls::stream<enyx::oe::hwstrat::tcp_replies> & tcp_replies_in,
                      uint32_t * supported_instrument_count);

@@ -28,7 +28,7 @@
 
 
 #include "messages.hpp"
-#include "../include/enyx/hfp/hls/hfp.hpp"
+#include "../include/enyx/hfp/hfp.hpp"
 #include "notifications.hpp"
 
 /// dependency upon all producing modules. See comments below for this design choice (low latency driven)
@@ -53,7 +53,7 @@ namespace nxaccess_hw_algo {
 void Notifications::p_broadcast_notifications(hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in, 
                               hls::stream<user_dma_tick2trade_notification> &tick2trade_in,
                               hls::stream<user_dma_update_instrument_configuration_ack> &config_acks_in,
-                              hls::stream<enyx::hfp::hls::dma_user_channel_data_out> & conf_out)
+                              hls::stream<enyx::hfp::dma_user_channel_data_out> & conf_out)
 {
 #pragma HLS INLINE recursive
 #pragma HLS PIPELINE enable_flush
@@ -105,19 +105,19 @@ switch(current_state) {
         switch(input_type) {
 
         case Input_Configuration: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             enyx::oe::nxaccess_hw_algo::InstrumentConfiguration::write_word(notif_config, out, 1);
             conf_out.write(out);
             break;
         }
         case Input_Tick2cancel: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             out = Tick2cancel::notification_to_word(notif_t2cancel, 1);
             conf_out.write(out);
             break;
         }
         case Input_Tick2trade: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             out = Tick2trade::notification_to_word(notif_t2trade, 1);
             conf_out.write(out);
             break;
@@ -132,21 +132,21 @@ switch(current_state) {
         switch(input_type) {
 
         case Input_Configuration: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             InstrumentConfiguration::write_word(notif_config, out, 2);
             conf_out.write(out);
             current_state = WORD3;
             break;
         }
         case Input_Tick2cancel: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             out = Tick2cancel::notification_to_word(notif_t2cancel, 2);
             conf_out.write(out);
             current_state = WORD3;
             break;
         }
         case Input_Tick2trade: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             out = Tick2trade::notification_to_word(notif_t2trade, 2);
             conf_out.write(out);
             current_state = IDLE; // we have finished for this notification type
@@ -162,14 +162,14 @@ switch(current_state) {
         switch(input_type) {
 
         case Input_Configuration: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             InstrumentConfiguration::write_word(notif_config, out, 3);
             conf_out.write(out);
             current_state = IDLE; // we have finished
             break;
         }
         case Input_Tick2cancel: {
-            enyx::hfp::hls::dma_user_channel_data_out out;
+            enyx::hfp::dma_user_channel_data_out out;
             out = Tick2cancel::notification_to_word(notif_t2cancel, 3);
             conf_out.write(out);
             current_state = IDLE;

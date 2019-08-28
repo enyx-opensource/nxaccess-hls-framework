@@ -48,7 +48,7 @@ public:
                   hls::stream<enyx::md::hw::BooksData<2,256>::read_book_data_request> & book_req_out,
                   hls::stream<enyx::md::hw::BooksData<2,256>::book_entry> & books_in);
 
-    static enyx::hfp::hls::dma_user_channel_data_out
+    static enyx::hfp::dma_user_channel_data_out
     notification_to_word(const user_dma_tick2cancel_notification& notif_in, int word_index);
 }; // class
 }}} // Namespaces

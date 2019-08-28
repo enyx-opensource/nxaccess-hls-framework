@@ -53,7 +53,7 @@ convert(InstrumentConfiguration::instrument_configuration_data_item & internal_d
 
 /// Converts data words from User DMA to software message structure
 void
-InstrumentConfiguration::read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::hls::dma_user_channel_data_in& word, int word_index) {
+InstrumentConfiguration::read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::dma_user_channel_data_in& word, int word_index) {
    #pragma HLS function_instantiate variable=word_index
     switch(word_index) {
     case 1: {
@@ -82,7 +82,7 @@ InstrumentConfiguration::read_word(user_dma_update_instrument_configuration_ack&
 
 /// Converts data words from User DMA to software message structure
 void
-InstrumentConfiguration::read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::hls::dma_user_channel_data_in& word, int word_index) {
+InstrumentConfiguration::read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::dma_user_channel_data_in& word, int word_index) {
    #pragma HLS function_instantiate variable=word_index
     switch(word_index) {
     case 1: {
@@ -111,7 +111,7 @@ InstrumentConfiguration::read_word(user_dma_update_instrument_configuration& ret
 
 /// Converts configuration message ack to software message structure to data words
 void
-InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::hls::dma_user_channel_data_out& out_word, int word_index) {
+InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::dma_user_channel_data_out& out_word, int word_index) {
    #pragma HLS function_instantiate variable=word_index
     switch(word_index) {
     case 1: {
@@ -142,7 +142,7 @@ InstrumentConfiguration::write_word(const user_dma_update_instrument_configurati
 
 /// Converts configuration message ack to software message structure to data words
 void
-InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::hls::dma_user_channel_data_out& out_word, int word_index) {
+InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::dma_user_channel_data_out& out_word, int word_index) {
    #pragma HLS function_instantiate variable=word_index
     switch(word_index) {
     case 1: {
@@ -186,7 +186,7 @@ std::ostream& operator<<(std::ostream& os, const user_dma_update_instrument_conf
 }
 
 void
-InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp::hls::dma_user_channel_data_in> & conf_in,
+InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp::dma_user_channel_data_in> & conf_in,
                                                           hls::stream<InstrumentConfiguration::read_instrument_data_request> (& req_in)[2],
                                                           hls::stream<instrument_configuration_data_item> (& req_out)[2],
                                                           hls::stream<user_dma_update_instrument_configuration_ack> & conf_out) {
@@ -212,7 +212,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
     {
             if(!conf_in.empty()) {
                 
-                   enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
+                   enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
                    read_word(current_dma_message_read, _read, 1); // convert word 1 into struct
                    if((current_dma_message_read.header.dest == enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration)
                            && (current_dma_message_read.header.msg_type == InstrumentConfiguration::UpdateInstrumentData)
@@ -241,7 +241,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
     case READ_CONF_WORD2: {
         if(!conf_in.empty()) {
             std::cout << "[CONF] processing word 2 of configuration message \n";
-            enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
             read_word(current_dma_message_read, _read, 2); // convert word 2 into struct
             current_state = READ_CONF_WORD3;
         }
@@ -256,7 +256,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
         if(!conf_in.empty()) {
 
             std::cout << "[CONF] processing word 3 of configuration message \n";
-            enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
             read_word(current_dma_message_read, _read, 3); // convert word 4 into struct
             // convert it to instrument_configuration_data_item
             convert(write_data, current_dma_message_read);
@@ -297,7 +297,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
         if(!conf_in.empty()) {
 
             std::cout << "[CONF] Ignoring word from DMA. \n";
-            enyx::hfp::hls::dma_user_channel_data_in _read = conf_in.read();
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
             if(_read.last == 1) { /// it's the end of the packet, let's go back in IDLE state to process requests.
                 current_state = IDLE;
             }
