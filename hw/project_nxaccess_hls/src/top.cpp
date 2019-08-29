@@ -30,13 +30,13 @@
 
 #include "messages.hpp"
 #include "../include/enyx/hfp/hfp.hpp"
+#include "../include/enyx/oe/hwstrat/tcp.hpp"
 
 using namespace enyx::oe::hwstrat; // use nxAccess HLS framework.
 
 namespace algo = enyx::oe::nxaccess_hw_algo; // use nxAccess basic example
 namespace nxmd = enyx::md::hw;
 namespace nxoe = enyx::oe::hwstrat;
-// using namespace enyx::hfp::hls;
 
 // Modification of these constant will change the whole core behavior
 // the strategy can only handle instrument_count instruments at present
@@ -49,8 +49,7 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
                      hls::stream<enyx::hfp::dma_user_channel_data_in>& user_dma_channel_data_in,
                      hls::stream<enyx::hfp::dma_user_channel_data_out>& user_dma_channel_data_out,
                      hls::stream<enyx::oe::hwstrat::trigger_command_axi> & trigger_bus_out,
-//                     hls::stream<enyx::oe::hwstrat::tcp_replies> & tcp_replies_in,
-                     uint32_t * supported_instrument_count)
+                     hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & tcp_replies_in)
 {
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
@@ -60,8 +59,7 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
 #pragma HLS INTERFACE axis port=nxbus_in
 #pragma HLS INTERFACE axis port=user_dma_channel_data_in
 #pragma HLS INTERFACE axis port=user_dma_channel_data_out
-
-#pragma HLS INTERFACE register port=supported_instrument_count
+#pragma HLS INTERFACE axis port=tcp_replies_in
 
 //#pragma HLS INTERFACE register port=counter_tcpreplies_rx
 #pragma HLS DATAFLOW
@@ -152,6 +150,4 @@ struct nxbus_to_decision {} ;
                                                    tick2trade_to_notifs, 
                                                    config_to_notifs, 
                                                    user_dma_channel_data_out);
-   // counters
-   *supported_instrument_count = instrument_count;
 }
