@@ -32,6 +32,7 @@
 #include "../src/configuration.hpp"
 #include "../src/messages.hpp"
 #include "../include/enyx/hfp/hfp.hpp"
+#include "../include/enyx/oe/hwstrat/tcp.hpp"
 
 namespace nxoe = enyx::oe::hwstrat;
 using _nxbus = enyx::md::hw::nxbus_axi;
@@ -64,12 +65,9 @@ private:
 
         hls::stream<_nxbus>                 nxbus_in("nxbus_in");
         hls::stream<_trigger_cmd>           trigger_out("trigger_command");
-        //hls::stream<nxoe::tcp_replies>      tcp_replies_in("tcp_replies");
+        hls::stream<nxoe::tcp_reply_payload>      tcp_replies_in("tcp_replies");
         hls::stream<enyx::hfp::dma_user_channel_data_in>           dma_data_in("dma_user_channel_data_in");
         hls::stream<enyx::hfp::dma_user_channel_data_out>          dma_data_out("dma_user_channel_data_out");
-
-        uint32_t instrument_count           = 0;
-
 
         // read reference file
         std::cout << "[TEST] Reading nxbus_in ref file...\n";
@@ -87,14 +85,12 @@ private:
         while(nxbus_in.size() > 0 ) {
              ++acc;
             std::cout << "[TB] Main Processing loop iteration#" << std::dec << acc << "\n";
-            algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, //tcp_replies_in,
-                                 &instrument_count);
+            algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
         }
         const int TOTAL_LATENCY = 1000;
         for(int i = 0 ; i < TOTAL_LATENCY; ++i)
         {
-            algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, //tcp_replies_in,
-                             &instrument_count);
+            algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
 
             if (!dma_data_out.empty()) {
                    enyx::hfp::dma_user_channel_data_out r =  dma_data_out.read();
