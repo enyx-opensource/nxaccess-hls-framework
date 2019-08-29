@@ -18,9 +18,7 @@
 #include "../include/enyx/oe/hwstrat/nxoe.hpp"
 #include "../include/enyx/md/hw/nxbus.hpp"
 
-#include "messages.hpp" // useless
 #include "../include/enyx/hfp/hfp.hpp"
-#include "configuration.hpp"
 
 #include "../include/enyx/oe/hwstrat/tcp.hpp"
 

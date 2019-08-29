@@ -1,0 +1,17 @@
+# TCP reply payloads from the market 
+#--------------------------------------
+#8b             128b 
+#XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X
+# |         |                        |
+# |         |                        + last : 1 bit for last packet of a burst 
+# |         +-----    TCP data payload
+# |
+# +----   TCP Session ID on 8 bits
+
+# first packet 
+00 00000000000000000000000000000055 0
+# end packet of a burst
+00 00000000000000000000000000000042 1
+# Packet on session 2 
+02 00000000000000000000000000005656 1
+
