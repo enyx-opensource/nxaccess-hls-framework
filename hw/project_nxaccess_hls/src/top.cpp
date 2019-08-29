@@ -32,6 +32,9 @@
 #include "../include/enyx/hfp/hfp.hpp"
 #include "../include/enyx/oe/hwstrat/tcp.hpp"
 
+
+#include "tcp_consumer.hpp"
+
 using namespace enyx::oe::hwstrat; // use nxAccess HLS framework.
 
 namespace algo = enyx::oe::nxaccess_hw_algo; // use nxAccess basic example
@@ -73,16 +76,20 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
 #pragma HLS STREAM variable=instrument_read_responses depth=1
 
    // Input Market Data Distribution to the various functions
-   static hls::stream<nxmd::nxbus_axi> nxbus_outputs[strategy_count+1]; // demuxed outputs to (consumer) decision blocks
+   static hls::stream<nxmd::nxbus_axi> nxbus_outputs[strategy_count+1]; // demuxed/duplicated outputs to (consumer) decision blocks
 #pragma HLS STREAM variable=nxbus_outputs depth=1
-struct nxbus_to_decision {} ;
-   typedef enyx::hls_tools::demuxer<nxbus_to_decision, strategy_count+1, nxmd::nxbus_axi>  nxbus_to_decision_demuxer_type; // create demuxer type
-   nxbus_to_decision_demuxer_type::p_demux(nxbus_in, nxbus_outputs); // effectively demux
 
-   // Mux the order trigger instructions from the various Algorithms
+   // disable warning in GCC for anonymous structs, like 'nxbus_to_decision'
+   #pragma GCC diagnostic ignored "-Wlocal-type-template-args"
+   struct nxbus_to_decision {} ;
+   typedef enyx::hls_tools::demuxer<nxbus_to_decision, strategy_count+1, nxmd::nxbus_axi>  nxbus_to_decision_demuxer_type; // create demuxer/duplicate type
+   nxbus_to_decision_demuxer_type::p_demux(nxbus_in, nxbus_outputs); // effectively demux/duplicate
+
+   // Mux/arbitrate the order trigger commands from the various Algorithms
    struct decisions_to_trigger {};
-   typedef enyx::hls_tools::arbiter<decisions_to_trigger, strategy_count, nxoe::trigger_command_axi>  decisions_to_trigger_arbiter_type; // create demuxer type
-   static hls::stream<nxoe::trigger_command_axi> decisions_ouputs[strategy_count]; // demuxed outputs to decision blocks
+   typedef enyx::hls_tools::arbiter<decisions_to_trigger, strategy_count+1, nxoe::trigger_command_axi>  decisions_to_trigger_arbiter_type; // create arbiter type
+
+   static hls::stream<nxoe::trigger_command_axi> decisions_ouputs[strategy_count+1]; // duplicated outputs, consumed by decision blocks
 #pragma HLS STREAM variable=decisions_ouputs depth=1
 
    decisions_to_trigger_arbiter_type::p_arbitrate(decisions_ouputs, trigger_bus_out);
@@ -150,4 +157,8 @@ struct nxbus_to_decision {} ;
                                                    tick2trade_to_notifs, 
                                                    config_to_notifs, 
                                                    user_dma_channel_data_out);
+
+
+     // Consumes TCP input data, and trigger
+     enyx::oe::nxaccess_hw_algo::TcpConsumer::p_consume_tcp(tcp_replies_in, decisions_ouputs[strategy_count]);
 }
