@@ -24,7 +24,7 @@ namespace enyx {
 namespace oe {
 namespace hwstrat {
 
-#pragma pack(1)
+//#pragma pack(1)
 struct cpu2fpga_header {
     // first byte
     uint8_t version:4;     /// message format version
