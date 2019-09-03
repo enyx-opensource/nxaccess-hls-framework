@@ -71,51 +71,52 @@ private:
 
         // read reference file
         std::cout << "[TEST] Reading nxbus_in ref file...\n";
-        read_nxbus_from_file(nxbus_in, generate_filename("nxbus_in", ".ref", Index, burst_index));
         read_dma_config_in_from_file(dma_data_in, generate_filename("dma_user_in", ".ref", Index, burst_index));
 
+        int config_stimuli_count = dma_data_in.size();
+        for (int i =0; i < config_stimuli_count; ++i) {
+            std::cout << "[TB] Configuration related loop #" << std::dec << i << "\n";
+            algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+        }
+
+        read_nxbus_from_file(nxbus_in, generate_filename("nxbus_in", ".ref", Index, burst_index));
+        read_tcp_reply_in_from_file(tcp_replies_in, generate_filename("tcp_reply_payload_in", ".ref", Index, burst_index));
 
         assert(!nxbus_in.empty());
 
-
         // Process ctrl.
-        std::cout << "[TEST] Running algorithm...\n";
-        int acc = 0;
-
-        while(nxbus_in.size() > 0 ) {
-             ++acc;
-            std::cout << "[TB] Main Processing loop iteration#" << std::dec << acc << "\n";
+        std::cout << "[TEST] Running on triggers...\n";
+        // while there's some input in TCP or nxBus, run the algorithm
+        int input_stimuli_count = std::max(nxbus_in.size(), tcp_replies_in.size());
+        for (int i =0; i < input_stimuli_count; ++i) {
+            std::cout << "[TB] Main processing loop iteration#" << std::dec << i << "\n";
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
         }
-        const int TOTAL_LATENCY = 1000;
-        for(int i = 0 ; i < TOTAL_LATENCY; ++i)
+
+        // ensure all entries where consumed, if not, there's a problem. For instance, some backpressure could be
+        // a legitimate reason
+        assert(nxbus_in.empty());
+        assert(tcp_replies_in.empty()); // ensure all entries where consumed, if not, there's a problem.
+
+        const int TOTAL_ALGORITHM_EXPECTED_LATENCY = 10;
+        for(int i = 0 ; i < TOTAL_ALGORITHM_EXPECTED_LATENCY; ++i)
         {
+            std::cout << "[TB] Post processing loop iteration#" << std::dec << i << "\n";
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
-
-            if (!dma_data_out.empty()) {
-                   enyx::hfp::dma_user_channel_data_out r =  dma_data_out.read();
-            }
         }
 
-        while(!nxbus_in.empty())
-        {
-            std::cout << "Flushing remaining nxBus entry! \n";
-            nxbus_in.read();
-        }
-
-        assert(nxbus_in.empty()); // ensure all entries where consumed, if not, there's a problem.
         {
             // generates trigger output to file. consumes trigger_out bus
             auto triggered = dump_trigger_to_file(trigger_out, generate_filename("trigger_out", ".gen", Index, burst_index));
             auto trigger_ref = read_trigger_from_file(generate_filename("trigger_out", ".ref", Index, burst_index));
             std::cout << "[TEST] Comparing trigger output with ref file...\n";
-            compare_ref_and_gen(trigger_ref, triggered);
+            compare_generated_and_reference(trigger_ref, triggered);
             std::cout << "[TEST] Trigger output compared successfully ! \n";
         }
 
-        while (!dma_data_out.empty()) {
-           enyx::hfp::dma_user_channel_data_out r =  dma_data_out.read();
-
+        // Flush the DMA out, as we don't dump it, nor test it.
+        while(!dma_data_out.empty()) {
+            dma_data_out.read();
         }
 
 
@@ -154,6 +155,24 @@ private:
             }
         }
     }
+
+    /**
+     * @brief read_tcp_reply_in_from_file Fills a stream
+     * @param data_in
+     * @param file
+     */
+    static void read_tcp_reply_in_from_file(hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & data_in,
+                                            std::string const& filename)
+    {
+        std::ifstream tcp_in(filename.c_str());
+        assert(tcp_in && "Can't open file !" );
+        for (std::string l; std::getline(tcp_in, l); ) {
+            if (! l.empty() && l[0] != '#') {
+                 tcp_reply_reply_payload_convert_tb(data_in,l);
+            }
+        }
+    }
+
 
     static void
     convert_string_to_cpu2fpgaheader(enyx::oe::hwstrat::cpu2fpga_header & out,  std::istringstream& in)
@@ -225,6 +244,33 @@ private:
         }
     }
 
+    /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::dma_user_channel_data_in)
+    static void
+    tcp_reply_reply_payload_convert_tb(hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & result,
+                                       std::string const& content)
+    {
+        //# TCP reply payloads from the market.
+        //#--------------------------------------
+        //#8b             128b.
+        //#XX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X
+        //# |         |                        |
+        //# |         |                        + last : 1 bit for last packet of a burst.
+        //# |         +-----    TCP data payload
+        //# |
+        //# +----   TCP Session ID on 8 bits
+
+
+
+        enyx::oe::hwstrat::tcp_reply_payload burst;
+        std::istringstream ss(content);
+        burst.user =  enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+        burst.data =  enyx::get_from_hex_stream_as< ap_uint<128> >(ss);
+        burst.last =  enyx::get_from_hex_stream_as< ap_uint<1> >(ss);
+
+        std::cout << "[VERBOSE]" << std::hex <<  "tcp : " << "\n\tdata = " << burst.data << "\n\t user = " << burst.user << "\n";
+        result.write(burst);
+    }
+
     /// feeds trigger_command_axi stream from file
     static std::vector<std::string>
     read_trigger_from_file(std::string const& file)
@@ -239,7 +285,7 @@ private:
     }
 
     static void
-    compare_ref_and_gen(std::vector<std::string> const& expected,
+    compare_generated_and_reference(std::vector<std::string> const& expected,
                    std::vector<std::string> const& generated)
     {
         if(expected.size() != generated.size())
@@ -288,6 +334,7 @@ private:
 int
 main(int argc, char** argv)
 {
+
     TopTestBench<0, 2>();
 
 

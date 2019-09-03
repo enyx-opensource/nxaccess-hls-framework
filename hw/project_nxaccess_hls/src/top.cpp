@@ -27,13 +27,9 @@
 #include "tick2cancel.hpp"
 #include "tick2trade.hpp"
 #include "notifications.hpp"
+#include "tcp_consumer.hpp"
 
 #include "messages.hpp"
-#include "../include/enyx/hfp/hfp.hpp"
-#include "../include/enyx/oe/hwstrat/tcp.hpp"
-
-
-#include "tcp_consumer.hpp"
 
 using namespace enyx::oe::hwstrat; // use nxAccess HLS framework.
 

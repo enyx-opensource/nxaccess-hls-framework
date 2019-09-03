@@ -31,14 +31,13 @@ void TcpConsumer::p_consume_tcp(hls::stream<enyx::oe::hwstrat::tcp_reply_payload
         // the main algorithm.
 
         // Let as example : parse the FIX protocol or any other protocol
-
         // It is to be implemented with a real use case.
-        if(tcp_data.data(7,0) == 0) {  // if tcp.session_id == 0
+        if(tcp_data.user(7,0) == 0) {  // if tcp.session_id == 0
             // do something for session #0
-            std::cout << "[tcp] Received data for session id #0 !" << std::endl;
-        } else if (tcp_data.data(7,0) == 2) { // if tcp.session_id == 2
+            std::cout << "[TCP_CONSUMER] Received data for session id #0 !" << std::endl;
+        } else if (tcp_data.user(7,0) == 7) { // if tcp.session_id == 7
            // do something for session #2
-           std::cout << "[tcp] Received data for session id #2 !" << std::endl;
+           std::cout << "[TCP_CONSUMER] Received data for session id #2 ! Triggering collection #1024" << std::endl;
 
            // -- Example action code : please remove this in production unless you
            // really want it !
