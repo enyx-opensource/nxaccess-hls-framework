@@ -253,9 +253,5 @@ static void
                                     arg4);
     }
 
-//struct tcp_replies {
-	 //ap_uint<4> user; /// TCP session Id
-	 //ap_uint<TCP_REPLIES_DATA_WIDTH> data;
-//};
 
 }}} // Namespaces
