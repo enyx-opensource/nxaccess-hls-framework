@@ -30,6 +30,11 @@ namespace enyx {
 namespace oe {
 namespace nxaccess_hw_algo {
 
+/**
+ * @brief The Tick2trade strategy. This strategy is implemented with a 1-process approach.
+ * This implementation does not ensure that one nxbus word can be consumed at each clock cycle.
+ * Theorically, it could create backpressure on the feedhandler.
+ */
 class Tick2trade {
 public:
 
