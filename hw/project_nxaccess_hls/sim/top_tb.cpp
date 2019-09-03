@@ -307,7 +307,6 @@ private:
     static std::vector<std::string>
     dump_trigger_to_file(hls::stream<enyx::oe::hwstrat::trigger_command_axi> & data_in, std::string const& file)
     {
-        nxoe::convert_trigger_command_axi_to_text(data_in);
         std::vector<std::string> ret;
         std::ofstream data_out_file(file.c_str());
         assert(data_out_file);

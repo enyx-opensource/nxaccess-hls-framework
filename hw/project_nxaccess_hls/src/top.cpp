@@ -43,6 +43,12 @@ static const std::size_t instrument_count = 256;
 // number of trading strategies
 static const std::size_t strategy_count = 2;
 
+/// Bus indexes of the algorithms strategies
+enum DecisionBusIndex {
+    Tick2Cancel = 0,
+    Tick2Trade = 1
+};
+
 void
 algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
                      hls::stream<enyx::hfp::dma_user_channel_data_in>& user_dma_channel_data_in,
@@ -98,6 +104,9 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
 #pragma HLS STREAM variable=read_book_request_bus depth=1
 #pragma HLS STREAM variable=books depth=1
 
+   // contextual data to take a trigger decision
+   static hls::stream<enyx::oe::nxaccess_hw_algo::Tick2cancel::ContextData> t2c_context;
+
    // User notification DMA channel : need to arbitrate between configuration module and strategies
    struct dma_notifications{};
    typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +1, enyx::hfp::dma_user_channel_data_out>  dma_notification_arbiter_type;
@@ -114,14 +123,19 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
    #pragma HLS STREAM variable=tick2cancel_to_notifs depth=4
 
 
-   // Tick to Cancel Algorithm
-   enyx::oe::nxaccess_hw_algo::Tick2cancel::p_algo(nxbus_outputs[0],
-                           instrument_read_bus[0],
-                           instrument_read_responses[0],
-                           decisions_ouputs[0],
-                           tick2cancel_to_notifs,
-                           read_book_request_bus[0],
-                           books[0]);
+   /// Tick to Cancel Algorithm
+   // process nxbus, make requests to books & instruments data
+   enyx::oe::nxaccess_hw_algo::Tick2cancel::preprocess_nxbus(nxbus_outputs[Tick2Cancel],
+                                                             instrument_read_bus[Tick2Cancel],
+                                                             read_book_request_bus[Tick2Cancel],
+                                                             t2c_context);
+   // process response from book & instruments data, perform trigger
+   enyx::oe::nxaccess_hw_algo::Tick2cancel::trigger(instrument_read_responses[Tick2Cancel],
+                                                    books[Tick2Cancel],
+                                                    decisions_ouputs[Tick2Cancel],
+                                                    tick2cancel_to_notifs,
+                                                    t2c_context);
+
 
    // Price Collar Algorithm
    enyx::oe::nxaccess_hw_algo::Tick2trade::p_algo(nxbus_outputs[1],
