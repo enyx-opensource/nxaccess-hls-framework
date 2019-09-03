@@ -103,7 +103,7 @@ struct trigger_command {
         MEMBER_TO_ARG(arg2,             TRIGGER_SIZE_ARG2) ;
         MEMBER_TO_ARG(arg3,             TRIGGER_SIZE_ARG3) ;
         MEMBER_TO_ARG(arg4,             TRIGGER_SIZE_ARG4) ;
-
+        arg.data.reverse();
         return arg;
     }
 
@@ -144,7 +144,6 @@ static void
         output_trigger.arg4 = arg4;
         trigger_command_axi output = static_cast<trigger_command_axi>(output_trigger);
         output.last = 1;
-        output.data.reverse();
         trigger_axibus_out.write(output);
     }
 
