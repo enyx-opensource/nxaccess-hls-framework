@@ -8,7 +8,6 @@
 # |
 # +----   TCP Session ID on 8 bits
 
-02 00000000000000000000000000005656 1
 # first packet 
 00 00000000000000000000000000000055 0
 # end packet of a burst
