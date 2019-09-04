@@ -24,7 +24,9 @@ namespace enyx {
 namespace oe {
 namespace hwstrat {
 
-//#pragma pack(1)
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
 struct cpu2fpga_header {
     // first byte
     uint8_t version:4;     /// message format version
@@ -52,7 +54,9 @@ struct cpu2fpga_header {
 //static_assert(8 == sizeof(cpu2fpga_header), "Invalid cpu2fpga header size. Must be 8B");
 //_Static_assert(8 == sizeof(cpu2fpga_header), "Invalid cpu2fpga header size. Must be 8B");
 
-#pragma pack(1)
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
 struct fpga2cpu_header {
     //first byte
     uint8_t version:4;     /// message format version

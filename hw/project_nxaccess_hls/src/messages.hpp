@@ -23,7 +23,9 @@ namespace nxaccess_hw_algo {
 
 
 /// Complete message layout to configure an instrument trigger, for CPU->FPGA comm
-//#pragma pack(1)
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
 struct user_dma_update_instrument_configuration {
     // word 1
     struct enyx::oe::hwstrat::cpu2fpga_header header; // 64 bits
@@ -51,7 +53,9 @@ struct user_dma_update_instrument_configuration {
 
 
 /// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
-//#pragma pack(1)
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
 struct user_dma_update_instrument_configuration_ack {
     //16B
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
@@ -78,7 +82,9 @@ struct user_dma_update_instrument_configuration_ack {
 
 
 /// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
-//#pragma pack(1)
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
 struct user_dma_tick2cancel_notification {
     //16B 
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
@@ -102,7 +108,9 @@ struct user_dma_tick2cancel_notification {
 
 
 /// Complete message layout to configure an instrument trigger, for CPU2FPGA comm
-//#pragma pack(1)
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
 struct user_dma_tick2trade_notification {
     //16B
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
