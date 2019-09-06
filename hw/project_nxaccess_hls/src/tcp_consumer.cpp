@@ -35,14 +35,19 @@ void TcpConsumer::p_consume_tcp(hls::stream<enyx::oe::hwstrat::tcp_reply_payload
         if(tcp_data.user(7,0) == 0) {  // if tcp.session_id == 0
             // do something for session #0
             std::cout << "[TCP_CONSUMER] Received data for session id #0 !" << std::endl;
-        } else if (tcp_data.user(7,0) == 2) { // if tcp.session_id == 2
+        } else if (tcp_data.user(7,0) == 2 && tcp_data.data(128,0) != 0x42) { // if tcp.session_id == 2
+             // note : we use tcp_data somewhere because otherwise Xilinx Vivado 2019.1 generates invalid VHDL & verilog code !!!
+             // some input data must be used in the output data
+             // a way to disable this code is to check for a TCP session id (tcp_data.user) which is greater than 32
+             // This is being reported to Xilinx.
+
            // do something for session #2
            std::cout << "[TCP_CONSUMER] Received data for session id #2 ! Triggering collection #1024" << std::endl;
 
            // -- Example action code : please remove this in production unless you
            // really want it !
            // as example, we trigger collection #1
-           enyx::oe::hwstrat::trigger_collection(output, 1024);
+           enyx::oe::hwstrat::trigger_collection(output, 1024 + tcp_data.user(7,0)+tcp_data.data(7,0));
 
         }
     }
