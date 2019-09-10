@@ -7,6 +7,7 @@ target_include_directories(enyx-oe-hwstrat-hls-engine
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 target_link_libraries(enyx-oe-hwstrat-hls-engine
+        enyx-hfp
         ${EnyxLibs_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${Rt_LIBRARY})

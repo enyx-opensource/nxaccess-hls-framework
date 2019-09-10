@@ -10,10 +10,10 @@
 #include <iomanip>
 #include <cstring>
 
-#include <libhfp/mm.hpp>
-#include <libhfp/rx.hpp>
-#include <libhfp/tx.hpp>
-#include <libhfp/error.hpp>
+#include <enyx/hfp/mm.hpp>
+#include <enyx/hfp/rx.hpp>
+#include <enyx/hfp/tx.hpp>
+#include <enyx/hfp/error.hpp>
 #include <enyx/utils/log/macros.hpp>
 
 #define _BSD_SOURCE
@@ -51,7 +51,7 @@ const char * HfpChannelUsage = "user0";
 
 template<typename Setting>
 std::error_code
-sendToFpga(::hfp::tx & tx,
+sendToFpga(enyx::hfp::tx & tx,
            Setting const& setting)
 {
     int failure;
@@ -64,7 +64,7 @@ sendToFpga(::hfp::tx & tx,
     while ((failure = tx.send(&setting, sizeof(setting))) && errno == EAGAIN)
         continue;
 
-    return ::hfp::err_to_error_code(failure);
+    return enyx::hfp::err_to_error_code(failure);
 }
 
 const uint8_t APPLICATION_VERSION = 1;
@@ -128,10 +128,10 @@ struct AlgorithmDriver::Impl {
     }
 
     const uint16_t boardId_;
-    ::hfp::mm mm_{boardId_, MMDeviceId};
-    ::hfp::rx rx_{boardId_, HfpChannelUsage};
-    ::hfp::tx tx_{boardId_, HfpChannelUsage};
-    ::hfp::rx::poller<std::reference_wrapper<Impl>> rxPoller_{rx_.get_poller(std::ref(*this))};
+    enyx::hfp::mm mm_{boardId_, MMDeviceId};
+    enyx::hfp::rx rx_{boardId_, HfpChannelUsage};
+    enyx::hfp::tx tx_{boardId_, HfpChannelUsage};
+    enyx::hfp::rx::poller<std::reference_wrapper<Impl>> rxPoller_{rx_.get_poller(std::ref(*this))};
     Handler & handler_;
 };
 
