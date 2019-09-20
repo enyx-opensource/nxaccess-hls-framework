@@ -28,7 +28,8 @@ struct trigger_command_axi; //fwd decl
 struct trigger_meta_size {
     // nxBus Sizes
     static std::size_t const TRIGGER_SIZE_COLLECTION_ID        = 16; // 16 bits
-    static std::size_t const TRIGGER_SIZE_VALID_ARGUMENTS       = 5; // 5 bits, one bit per valid argument. 5 args max
+    static std::size_t const TRIGGER_SIZE_ARGUMENTS       = 8; // 8 bits: three MSB bits reserved, remaining bits for each of the five arguments
+    static std::size_t const TRIGGER_SIZE_VALID_ARGUMENTS       = 5; // 8 bits: three MSB bits reserved, remaining bits for each of the five arguments
     static std::size_t const _TRIGGER_SIZE_DATA_ARGUMENT       = 128; // 128 bits
 
     // we need the size for each argument
@@ -45,7 +46,7 @@ struct trigger_meta_size {
 #pragma pack(1) // ensure C++ packs structures correclty
 struct trigger_meta_struct{
     char TRIGGER_SIZE_COLLECTION_ID[trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID];
-    char TRIGGER_SIZE_VALID_ARGUMENTS[trigger_meta_size::TRIGGER_SIZE_VALID_ARGUMENTS];
+    char TRIGGER_SIZE_ARGUMENTS[trigger_meta_size::TRIGGER_SIZE_ARGUMENTS];
     char TRIGGER_SIZE_ARG0[trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT];
     char TRIGGER_SIZE_ARG1[trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT];
     char TRIGGER_SIZE_ARG2[trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT];
@@ -57,7 +58,7 @@ struct trigger_meta_struct{
 struct trigger_command_axi {
 
     static std::size_t const data_width = trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID + \
-                                          trigger_meta_size::TRIGGER_SIZE_VALID_ARGUMENTS + \
+                                          trigger_meta_size::TRIGGER_SIZE_ARGUMENTS + \
                                           trigger_meta_size::TRIGGER_SIZE_VALID_ARGUMENTS * trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT;
     ap_uint<data_width> data;
 
@@ -79,9 +80,12 @@ struct trigger_command {
     trigger_command() {} // default
 
     /// Conversion operator from AXI bus
-    trigger_command(trigger_command_axi const arg) {
+    trigger_command(trigger_command_axi const _arg) {
+    	trigger_command_axi arg;
+    	arg = _arg;
+    	arg.data.reverse(); // reverse bit ordering (end_of_extra is MSB on AXI)
         ARG_TO_MEMBER(collection_id,     TRIGGER_SIZE_COLLECTION_ID) ;
-        ARG_TO_MEMBER(valid_arguments, TRIGGER_SIZE_VALID_ARGUMENTS) ;
+        ARG_TO_MEMBER(valid_arguments, TRIGGER_SIZE_ARGUMENTS) ;
         ARG_TO_MEMBER(arg0,             TRIGGER_SIZE_ARG0) ;
         ARG_TO_MEMBER(arg1,             TRIGGER_SIZE_ARG1) ;
         ARG_TO_MEMBER(arg2,             TRIGGER_SIZE_ARG2) ;
@@ -93,17 +97,18 @@ struct trigger_command {
     operator trigger_command_axi() {
         trigger_command_axi arg;
         MEMBER_TO_ARG(collection_id,     TRIGGER_SIZE_COLLECTION_ID) ;
-        MEMBER_TO_ARG(valid_arguments, TRIGGER_SIZE_VALID_ARGUMENTS) ;
+        MEMBER_TO_ARG(valid_arguments, TRIGGER_SIZE_ARGUMENTS) ;
         MEMBER_TO_ARG(arg0,             TRIGGER_SIZE_ARG0) ;
         MEMBER_TO_ARG(arg1,             TRIGGER_SIZE_ARG1) ;
         MEMBER_TO_ARG(arg2,             TRIGGER_SIZE_ARG2) ;
         MEMBER_TO_ARG(arg3,             TRIGGER_SIZE_ARG3) ;
         MEMBER_TO_ARG(arg4,             TRIGGER_SIZE_ARG4) ;
+        arg.data.reverse();
         return arg;
     }
 
     ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID>  collection_id;
-    ap_uint<trigger_meta_size::TRIGGER_SIZE_VALID_ARGUMENTS> valid_arguments  ; // valid arguments in the following bus
+    ap_uint<trigger_meta_size::TRIGGER_SIZE_ARGUMENTS> valid_arguments  ; // valid arguments in the following bus
     ap_uint<trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT> arg0;
     ap_uint<trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT> arg1;
     ap_uint<trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT> arg2;
@@ -120,7 +125,7 @@ static std::size_t const TCP_REPLIES_DATA_WIDTH       = 128;
 static void
     trigger_collection_internal(hls::stream<trigger_command_axi> & trigger_axibus_out,
                                 ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> collection_id,
-                                ap_uint<trigger_meta_size::TRIGGER_SIZE_VALID_ARGUMENTS> valid_arguments,
+                                ap_uint<trigger_meta_size::TRIGGER_SIZE_ARGUMENTS> valid_arguments,
                                 ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG0> arg0,
                                 ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG1> arg1,
                                 ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG2> arg2,
@@ -247,9 +252,5 @@ static void
                                     arg4);
     }
 
-//struct tcp_replies {
-	 //ap_uint<4> user; /// TCP session Id
-	 //ap_uint<TCP_REPLIES_DATA_WIDTH> data;
-//};
 
 }}} // Namespaces
