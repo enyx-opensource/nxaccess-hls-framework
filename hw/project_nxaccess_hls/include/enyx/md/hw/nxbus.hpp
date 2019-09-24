@@ -41,7 +41,6 @@ struct nxbus_meta_sizes {
 
 // This meta struct is only here to avoid coding errors
 // C++ allows offsetof() to get the offset of the BYTE-aligned sturct, representing bit-aligned FPGA struct
-#pragma pack(1) // ensure C++ packs structures correclty
 struct nxbus_meta_struct{
     char NXBUS_SIZE_END_OF_EXTRA[nxbus_meta_sizes::NXBUS_SIZE_END_OF_EXTRA];
     char NXBUS_SIZE_MARKET_INTERNAL_ID[4];
@@ -58,7 +57,7 @@ struct nxbus_meta_struct{
     char NXBUS_SIZE_DATA1[32];
     char NXBUS_SIZE_DATA2[64];
     char NXBUS_EXTRA_DATA_MAX_SIZE[256];
-};
+}__attribute__((packed));
 
 struct nxbus_axi {
 

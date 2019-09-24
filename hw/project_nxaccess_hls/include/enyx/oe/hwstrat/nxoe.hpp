@@ -43,7 +43,6 @@ struct trigger_meta_size {
 
 // this meta struct is only here to avoid coding errors
 // C++ allows offsetof() to get the offset of the BYTE-aligned sturct, representing bit-aligned FPGA struct
-#pragma pack(1) // ensure C++ packs structures correclty
 struct trigger_meta_struct{
     char TRIGGER_SIZE_COLLECTION_ID[trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID];
     char TRIGGER_SIZE_ARGUMENTS[trigger_meta_size::TRIGGER_SIZE_ARGUMENTS];
@@ -52,7 +51,7 @@ struct trigger_meta_struct{
     char TRIGGER_SIZE_ARG2[trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT];
     char TRIGGER_SIZE_ARG3[trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT];
     char TRIGGER_SIZE_ARG4[trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT];
-};
+} __attribute__((packed));
 
 /// AXI bus for triggers
 struct trigger_command_axi {
