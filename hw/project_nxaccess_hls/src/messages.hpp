@@ -23,7 +23,7 @@ namespace nxaccess_hw_algo {
 
 
 /// Complete message layout to configure an instrument trigger, for CPU->FPGA comm
-#pragma pack(1)
+//#pragma pack(1)
 struct user_dma_update_instrument_configuration {
     // word 1
     struct enyx::oe::hwstrat::cpu2fpga_header header; // 64 bits
@@ -39,7 +39,7 @@ struct user_dma_update_instrument_configuration {
     uint8_t enabled; /// Whether the configuration fot this instrument is enabled or not.
     char pad2[5]; //ensure aligned on 128bits words
 
-};
+}__attribute__((packed));;
 
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
   static_assert(64 == sizeof(user_dma_update_instrument_configuration), "Size of user_dma_update_instrument_configuration is invalid");
@@ -51,7 +51,7 @@ struct user_dma_update_instrument_configuration {
 
 
 /// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
-#pragma pack(1)
+//#pragma pack(1)
 struct user_dma_update_instrument_configuration_ack {
     //16B
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
@@ -66,7 +66,7 @@ struct user_dma_update_instrument_configuration_ack {
     uint16_t tick_to_trade_ask_collection_id; // collection id to trigger if price under threshold
     uint8_t enabled; /// Whether the configuration for this instrument is enabled or not.
     char padding[5]; //ensure aligned on 128bits words
-};
+}__attribute__((packed));;
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
   static_assert(64 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
 # else
@@ -78,7 +78,7 @@ struct user_dma_update_instrument_configuration_ack {
 
 
 /// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
-#pragma pack(1)
+//#pragma pack(1)
 struct user_dma_tick2cancel_notification {
     //16B 
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
@@ -91,7 +91,7 @@ struct user_dma_tick2cancel_notification {
     uint16_t sent_collection_id; // triggered collection id
     uint8_t is_bid; /// Whether the configuration fot this instrument is enabled or not.
     char padding[9]; // pad to ensure 128b 
-};
+}__attribute__((packed));;
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
   static_assert(48 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
 # else
@@ -102,7 +102,7 @@ struct user_dma_tick2cancel_notification {
 
 
 /// Complete message layout to configure an instrument trigger, for CPU2FPGA comm
-#pragma pack(1)
+//#pragma pack(1)
 struct user_dma_tick2trade_notification {
     //16B
     struct enyx::oe::hwstrat::fpga2cpu_header header; //version == 1, msgtype == 1, length ==
@@ -114,7 +114,7 @@ struct user_dma_tick2trade_notification {
     uint8_t is_bid; /// Whether the configuration fot this instrument is enabled or not.
     char padding[1]; //ensure aligned on 128bits words
 
-};
+}__attribute__((packed));;
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
   static_assert(32 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
 # else

@@ -24,7 +24,7 @@ namespace enyx {
 namespace oe {
 namespace hwstrat {
 
-#pragma pack(1)
+//#pragma pack(1)
 struct cpu2fpga_header {
     // first byte
     uint8_t version:4;     /// message format version
@@ -37,7 +37,7 @@ struct cpu2fpga_header {
     uint32_t timestamp;   /// future use : hw timestamp, unused by soft
     uint16_t length;    /// message format version
 
-};
+}__attribute__((packed));;
 
 
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
@@ -52,7 +52,7 @@ struct cpu2fpga_header {
 //static_assert(8 == sizeof(cpu2fpga_header), "Invalid cpu2fpga header size. Must be 8B");
 //_Static_assert(8 == sizeof(cpu2fpga_header), "Invalid cpu2fpga header size. Must be 8B");
 
-#pragma pack(1)
+//#pragma pack(1)
 struct fpga2cpu_header {
     //first byte
     uint8_t version:4;     /// message format version
@@ -65,7 +65,7 @@ struct fpga2cpu_header {
     // third byte
     uint32_t timestamp;   /// future use : hw timestamp, unused for now.
     uint16_t length;    /// message format version
-};
+}__attribute__((packed));;
 
 
 #  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
