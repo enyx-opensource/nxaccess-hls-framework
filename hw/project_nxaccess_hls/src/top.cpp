@@ -57,7 +57,7 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
                      hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & tcp_replies_in)
 {
 
-#pragma HLS INTERFACE ap_ctrl_none port=return
+//#pragma HLS INTERFACE ap_ctrl_none port=return
 // #pragma HLS STREAM variable=nxbus_in depth=1024 dim=1
 
 #pragma HLS INTERFACE axis port=trigger_bus_out
