@@ -241,7 +241,7 @@ def build_vivado_project(firmware_project_dir, dry_run):
 
     # create command string
     # framework script appears to write to stderr (to be confirmed)
-    cmd = [GENERATE_FW_SCRIPT, '-p', vivado_bin, str(dev_framework_dir)]
+    cmd = [GENERATE_FW_SCRIPT, '-p', vivado_bin]
     if dry_run:
         logger.debug('Would have run {}'.format(' '.join(cmd)))
     else:
@@ -249,7 +249,7 @@ def build_vivado_project(firmware_project_dir, dry_run):
 
     # build firmware command string
     # framework script appears to write to stderr (to be confirmed)
-    cmd = [GENERATE_FW_SCRIPT, '-c', vivado_bin, str(dev_framework_dir)]
+    cmd = [GENERATE_FW_SCRIPT, '-c', vivado_bin]
     if dry_run:
         logger.debug('Would have run {}'.format(' '.join(cmd)))
     else:
