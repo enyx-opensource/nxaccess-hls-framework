@@ -1,3 +1,5 @@
+*.gen.txt
+*.txt.gen
 *.log
 *.includes
 *.files
@@ -5,4 +7,8 @@
 *.config
 .vscode/
 *.user
-*build*/
+.idea/
+venv/
+*.egg-info/
++__pycache__/
+

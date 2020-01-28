@@ -12,6 +12,7 @@
 
 PROJECT=project_nxaccess_hls
 VIVADO_CMD=vivado_hls
+PY_DIR=./../scripts/rebuild_firmware
 
 create_project:
 	echo "Will prepare Vivado HLS project ! "
@@ -28,21 +29,25 @@ csynth:
 	$(VIVADO_CMD) csynth.tcl
 cosim:
 	$(VIVADO_CMD) cosim.tcl
-
 open_gui:
-	$(VIVADO_CMD) -p project_nxaccess_hls
+	$(VIVADO_CMD) -p $(PROJECT)
 
-firmware:
-	$(VIVADO_CMD) csynth.tcl
-	./build_fpga.py --rtl-language vhdl
-clean:
-	echo "This will clean the vivado project files (not the source code)"
-	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
+$(PY_DIR)/venv:
+	$(PY_DIR)/install
 
+firmware: $(PY_DIR)/venv
+	$(PY_DIR)/rebuild_firmware -v \
+		./../../devFramework
 
 view_diff_trigger:
 	vimdiff project_nxaccess_hls/sim/top_tb_0/tr*{gen,ref}*
 
 show_timing_info:
-	@grep -B1 -A10  "Design Timing Summary" ../../devFramework/project/synth_00.runs/impl_1/shell_top_bittware_xupp3r_vu9p_mem_eth_dyn_timing_summary_routed.rpt
+	@grep -B1 -A10  "Design Timing Summary" ../../devFramework/project/synth_00.runs/impl_1/shell_top_bittware_xupp3r_vu9p_mem_eth_dyn_timing_summary_postroute_physopted.rpt
 
+clean:
+	echo "This will clean the vivado project files (not the source code)"
+	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
+	rm $(PY_DIR)/venv -rf
+	find $(PROJECT)/sim/ -name "*.txt.gen" -type f -delete
+	find $(PROJECT)/sim/ -name "*.gen.txt" -type f -delete
