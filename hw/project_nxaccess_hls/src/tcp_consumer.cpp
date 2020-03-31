@@ -32,10 +32,10 @@ void TcpConsumer::p_consume_tcp(hls::stream<enyx::oe::hwstrat::tcp_reply_payload
 
         // Let as example : parse the FIX protocol or any other protocol
         // It is to be implemented with a real use case.
-        if(tcp_data.user(7,0) == 0) {  // if tcp.session_id == 0
+        if(tcp_data.id(7,0) == 0) {  // if tcp.session_id == 0
             // do something for session #0
             std::cout << "[TCP_CONSUMER] Received data for session id #0 !" << std::endl;
-        } else if (tcp_data.user(7,0) == 64) { // if tcp.session_id == 64: should never trigger during real-world ops
+        } else if (tcp_data.id(7,0) == 64) { // if tcp.session_id == 64: should never trigger during real-world ops
              // note : we use tcp_data somewhere because otherwise Xilinx Vivado 2019.1 generates invalid VHDL & verilog code !!!
              // some input data must be used in the output data
              // a way to disable this code is to check for a TCP session id (tcp_data.user) which is greater than 32

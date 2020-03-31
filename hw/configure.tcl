@@ -13,9 +13,8 @@ add_files $here/project_nxaccess_hls/src/configuration.cpp -cflags {-fno-builtin
 add_files $here/project_nxaccess_hls/src/notifications.cpp -cflags {-fno-builtin -Wno-tautological-compare -I./ }
 add_files $here/project_nxaccess_hls/src/tcp_consumer.cpp -cflags {-fno-builtin -Wno-tautological-compare -I./ }
 
-add_files -tb $here/project_nxaccess_hls/sim/top_tb.cpp -cflags {-fno-builtin -Wno-unknown-pragmas -I../include }
-add_files -tb $here/project_nxaccess_hls/sim/top_tb_0
-#add_files -tb $here/project_nxaccess_hls/src/top.cpp -cflags {-fno-builtin -Wno-tautological-compare -I../include }
+add_files -tb $here/project_nxaccess_hls/sim/top_tb_bin.cpp -cflags {-fno-builtin -Wno-unknown-pragmas -I../include }
+add_files -tb $here/project_nxaccess_hls/sim/top_tb_tcp_bin
 
 set_part {xcvu9p-flgb2104-3-e}
 create_clock -period 4ns -name default

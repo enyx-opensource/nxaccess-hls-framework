@@ -1,0 +1,21 @@
+# ------------------------------------------------------------------------------
+# TCP session values
+# - hexadecimal values
+# - one line per packet (i.e. one line in tcp_reply_data.ref.txt)
+# - implementation may support less sessions (i.e. 4 instead of 256)
+# ------------------------------------------------------------------------------
+# 8b
+# XX
+#  |
+#  +--- session of ingress TCP payload
+# ------------------------------------------------------------------------------
+
+# first packet
+ff
+
+# second packet
+03
+01
+02
+02
+01

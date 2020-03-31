@@ -1,0 +1,18 @@
+# ------------------------------------------------------------------------------
+# TCP payload
+# - hexadecimal values
+# - one line per packet
+# - must be an even number of hex chars (complete bytes)
+# - odd number of hex chars forces an error on EOP (last char is trimed)
+# ------------------------------------------------------------------------------
+
+# first packet
+ffffffffffffffffffffffffffffffff ff
+
+# second packet (with error)
+033
+
+01
+02
+02
+01

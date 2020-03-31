@@ -12,6 +12,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <stdexcept>
 
 #include <iostream>
 #include <fstream>
@@ -69,20 +70,29 @@ private:
         hls::stream<enyx::hfp::dma_user_channel_data_in>           dma_data_in("dma_user_channel_data_in");
         hls::stream<enyx::hfp::dma_user_channel_data_out>          dma_data_out("dma_user_channel_data_out");
 
-        // read reference file
-        std::cout << "[TEST] Reading nxbus_in ref file...\n";
-        read_dma_config_in_from_file(dma_data_in, generate_filename("dma_user_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loading DMA configuration" << std::endl;
 
-        int config_stimuli_count = dma_data_in.size();
-        for (int i =0; i < config_stimuli_count; ++i) {
-            std::cout << "[TB] Configuration related loop #" << std::dec << i << "\n";
+        read_dma_config_in_from_file(dma_data_in, generate_filename("dma_user_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loaded " << std::dec << dma_data_in.size() << " configuration commands" << std::endl;
+        int iteration = 0;
+        while (dma_data_in.size() > 0) {
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+            std::cout << "[TB] " << std::dec << 
+                "iteration #" << iteration << ": " <<
+                "dma_data_in: " << dma_data_in.size() << " words remaining" <<
+                std::endl;
+            ++iteration;
         }
 
-        read_nxbus_from_file(nxbus_in, generate_filename("nxbus_in", ".ref", Index, burst_index));
-        read_tcp_reply_in_from_file(tcp_replies_in, generate_filename("tcp_reply_payload_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loading data contents" << std::endl;
 
-        assert(!nxbus_in.empty());
+        read_nxbus_from_file(nxbus_in, generate_filename("nxbus_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loaded " << std::dec << nxbus_in.size() << " nxbus packets" << std::endl;
+        read_tcp_from_files(
+            tcp_replies_in,
+            "top_tb_tcp_bin/tcp_reply_session.ref.txt",
+            "top_tb_tcp_bin/tcp_reply_data.ref.txt");
+        throw std::invalid_argument("stop ~~");
 
         // Process ctrl.
         std::cout << "[TEST] Running on triggers...\n";
@@ -92,6 +102,11 @@ private:
             std::cout << "[TB] Main processing loop iteration#" << std::dec << i << "\n";
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
         }
+
+        
+
+
+
 
         // ensure all entries where consumed, if not, there's a problem. For instance, some backpressure could be
         // a legitimate reason
@@ -128,7 +143,8 @@ private:
     generate_filename(std::string const& prefix, std::string const &suffix, std::size_t index, std::size_t burst)
     {
         std::ostringstream out;
-        out << "top_tb_" << index << "/" << prefix << "_" << burst << suffix << ".txt";
+        out << "top_tb_tcp_bin/" << prefix << "_" << burst << suffix << ".txt";
+        std::cout << "[TB] ~~~: " << "top_tb_tcp_bin/" << prefix << "_" << burst << suffix << ".txt" << std::endl;
         return out.str();
     }
 
@@ -171,6 +187,145 @@ private:
                  tcp_reply_reply_payload_convert_tb(data_in,l);
             }
         }
+    }
+
+
+
+// convert_nxbus_string_to_nxbus_axi(hls::stream<enyx::md::hw::nxbus_axi> & result, std::string const& content)
+// {
+//     // We want to read this kind of line: 
+//     // # EOE|id|code|order_id   |buy|qty    | price          | timestamp| instr_ascii                  | instr_bin|instr_id|data0         | data1  | data2
+//     // 01 00 95 0000000000000000 00 00000030 13A9875F0CBF7981 00000000 00000000000000000000000000000000 00000000 00000002 0102030405060708 00000000 0000000000000000
+
+//     std::istringstream ss(content);
+//     enyx::md::hw::nxbus nxbus_word;
+    
+//     // Beware, do not use uint8_t as storage, as C++ stringstream treats this as 'char
+//     nxbus_word.end_of_extra              = enyx::get_from_hex_stream_as<uint32_t>(ss);
+//     nxbus_word.market_internal_id        = enyx::get_from_hex_stream_as<uint32_t>(ss);
+//     nxbus_word.opcode                    = enyx::get_from_hex_stream_as<uint32_t>(ss);
+//     nxbus_word.order_id                  = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.buy_nsell                 = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.qty                       = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.price                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.timestamp                 = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.instr_ascii               = enyx::get_from_hex_stream_as<uint64_t>(ss); // FIXME most probably wrong as doesn't fit on 64bits
+//     nxbus_word.instr_bin                 = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.instr_id                  = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.data0                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.data1                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
+//     nxbus_word.data2                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
+
+//     result.write(static_cast<enyx::md::hw::nxbus_axi>(nxbus_word));
+// }
+
+    template<typename Word>
+    static void
+    fill_tcp_stream(hls::stream<Word> & stream, ap_uint<8> session, std::string const & content)
+    {
+        static std::size_t const word_byte_count = Word::data_width / 8;
+        Word word = Word();
+        word.id = session;
+        word.data = 0;
+
+        std::istringstream iss(content);
+
+        for (std::size_t i = 0, words = content.size(); 2*i < words; ) {
+            // iterate over each byte
+
+            word.data <<= 8;
+            word.data(8-1, 0) = enyx::get_from_hex_stream_as< ap_uint<8> >(iss);
+
+            ++i;
+            if (i % word_byte_count == 0) {
+                word.last = (i == content.size() - 1);
+                stream.write(word);
+                word.data = 0;
+            }
+        }
+
+        std::size_t const remaining_byte_count = content.size() % word_byte_count;
+        if (remaining_byte_count)
+        {
+            word.data <<= (word_byte_count - remaining_byte_count) * 8;
+            word.last = 1;
+            stream.write(word);
+        }
+    }
+
+    /**
+     * @brief read_tcp_from_files Fills a stream
+     * @param data_in
+     * @param session_filename
+     * @param data_filename
+     */
+
+    static void
+    read_tcp_from_files(
+        hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & data_in,
+        std::string const & session_filename,
+        std::string const & data_filename)
+    {
+        std::ifstream packet_sessions(session_filename.c_str());
+        std::ifstream packet_bytes(data_filename.c_str());
+        assert(packet_sessions && packet_bytes && "missing stimuli files" );
+
+        while (true) {
+            //enyx::oe::hwstrat::tcp_reply_payload tcp_word;
+            ap_uint<8> session;
+
+            std::string session_line;
+            for (std::string session_line; std::getline(packet_sessions, session_line); ) { 
+                //std::cout << "~~~~ session: " << session_line << std::endl;
+                if (!session_line.empty() && session_line[0] != '#') {
+                    std::cout << "~~~~ session data: " << session_line << std::endl;
+                    std::istringstream ss(session_line);
+                    session =  enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+                    break;
+                }
+            }
+
+            std::string content_bytes;
+            for (std::string content_bytes; std::getline(packet_bytes, content_bytes); ) { 
+                //std::cout << "~~~~ session: " << content_bytes << std::endl;
+                if (!content_bytes.empty() && content_bytes[0] != '#') {
+                    std::cout << "~~~~ content bytes: " << content_bytes << std::endl;
+                    break;
+                }
+            }
+
+            fill_tcp_stream(data_in, session, content_bytes);
+        }
+        throw std::invalid_argument("stop ~~");
+
+//   while(true)
+//   {
+//     fil1.read((char*)&e,sizeof(e));
+//     // do the checking right after a read()
+//     if (fil1.eof())
+//       break;
+//     e.display1();
+
+//     fil1.read((char*)&s,sizeof(s));
+//     s.display2();
+//   }   
+
+        // for (std::string l; std::getline(tcp_in, l); ) {
+        //     if (! l.empty() && l[0] != '#') {
+        //          tcp_reply_reply_payload_convert_tb(data_in,l);
+        //     }
+        // }
+    }
+
+    /// Reads words of DMA from file
+    static void
+    read_data_in_from_file(hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & data_in, std::string const& file)
+    {
+        std::ifstream data_in_file(file.c_str());
+        assert(data_in_file);
+        for (std::string l; std::getline(data_in_file, l); )
+            if (! l.empty() && l[0] != '#')
+                enyx::fill_stream_with_text(data_in, l);
     }
 
 

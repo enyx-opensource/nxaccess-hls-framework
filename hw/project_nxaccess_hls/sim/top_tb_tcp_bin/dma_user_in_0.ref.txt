@@ -1,0 +1,39 @@
+# # instrument data update sent to FPGA
+#--------------------------------------
+#            32b   16b         64b              64b              64b         32b    16b  16b  16b  8b
+# 1 8 1 0 XXXXXXXX XXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXX XXXX XXXX XXXX XX
+# | | | |    |      |          |                |                |            |      |    |    |   |
+# | | | |    |      |          |                |                |            |      |    |    |   +-- enabled
+# | | | |    |      |          |                |                |            |      |    |    |
+# | | | |    |      |          |                |                |            |      |    |    +-- tick_to_trade_ask_collection_id
+# | | | |    |      |          |                |                |            |      |    |
+# | | | |    |      |          |                |                |            |      |    +-- tick_to_cancel_collection_id
+# | | | |    |      |          |                |                |            |      |
+# | | | |    |      |          |                |                |            |      +-- tick_to_trade_bid_collection_id
+# | | | |    |      |          |                |                |            |
+# | | | |    |      |          |                |                |            +-- instrument_id
+# | | | |    |      |          |                |                |
+# | | | |    |      |          |                |                +-- tick_to_trade_ask_price
+# | | | |    |      |          |                |
+# | | | |    |      |          |                +-- tick_to_trade_bid_price
+# | | | |    |      |          |
+# | | | |    |      |          +-- tick_to_cancel_threshold
+# | | | |    |      |
+# | | | |    |      +-- length
+# | | | |    |
+# | | | |    +-- timestamp
+# | | | |
+# | | | |
+# | | | +-- request ack: X000
+# | | |                  |
+# | | |                  |
+# | | |                  +-- 1b1: ack is requested; 1b0: ack is not requested
+# | | |
+# | | +-- msg type: 0b0001
+# | |
+# | |
+# | +-- destination target: 0b1000
+# |
+# +-- version: 0b0001
+
+1 8 1 0 00000042 0000 00000004A817C800 0000000000000000 0000000000000000 00000014 0010 0011 0012 01
