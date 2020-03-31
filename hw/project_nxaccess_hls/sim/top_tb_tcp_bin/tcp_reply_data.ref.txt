@@ -1,18 +1,28 @@
 # ------------------------------------------------------------------------------
 # TCP payload
 # - hexadecimal values
-# - one line per packet
+# - one line per packet, no spaces
 # - must be an even number of hex chars (complete bytes)
 # - odd number of hex chars forces an error on EOP (last char is trimed)
 # ------------------------------------------------------------------------------
 
-# first packet
-ffffffffffffffffffffffffffffffff ff
+# 16 bytes
+0273da2c79dbc33115d58c8c7fd05be5
 
-# second packet (with error)
-033
+# 32 bytes
+37739d9c0c8865f7d8cd7cf87b74ffbc6f806f3a3cb821de401ab4f7d95843f5
 
-01
-02
-02
-01
+# 48 bytes
+280128293c86d950c3ab5726c6d22725bca0c2e1731fccebbc1660caadbdf33f7fb80bbe90ebbb2021a8347696ef1a48
+
+# 18 bytes
+6a574806603e4e5ac4b14b71be34953781
+
+# e2d9b30de9a51c427ecdb53177016168
+# ddfaaed2b3cc9dc60d7060978d9a60d9
+# 609e18c4cb9f93a77712143e22f4139a
+# d8355a9319b46698a44fbe291438724d
+# 1b37d0416dd472588dca946dca2b89a7
+# f3ce5ca5dafba1370b1c29e0af0e0142
+# 9c43154c40ffeffe7198b1228dec0da3
+# c9d6a23ce71c37f537cb50361b4e5e69

@@ -189,68 +189,77 @@ private:
         }
     }
 
-
-
-// convert_nxbus_string_to_nxbus_axi(hls::stream<enyx::md::hw::nxbus_axi> & result, std::string const& content)
-// {
-//     // We want to read this kind of line: 
-//     // # EOE|id|code|order_id   |buy|qty    | price          | timestamp| instr_ascii                  | instr_bin|instr_id|data0         | data1  | data2
-//     // 01 00 95 0000000000000000 00 00000030 13A9875F0CBF7981 00000000 00000000000000000000000000000000 00000000 00000002 0102030405060708 00000000 0000000000000000
-
-//     std::istringstream ss(content);
-//     enyx::md::hw::nxbus nxbus_word;
-    
-//     // Beware, do not use uint8_t as storage, as C++ stringstream treats this as 'char
-//     nxbus_word.end_of_extra              = enyx::get_from_hex_stream_as<uint32_t>(ss);
-//     nxbus_word.market_internal_id        = enyx::get_from_hex_stream_as<uint32_t>(ss);
-//     nxbus_word.opcode                    = enyx::get_from_hex_stream_as<uint32_t>(ss);
-//     nxbus_word.order_id                  = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.buy_nsell                 = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.qty                       = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.price                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.timestamp                 = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.instr_ascii               = enyx::get_from_hex_stream_as<uint64_t>(ss); // FIXME most probably wrong as doesn't fit on 64bits
-//     nxbus_word.instr_bin                 = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.instr_id                  = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.data0                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.data1                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
-//     nxbus_word.data2                     = enyx::get_from_hex_stream_as<uint64_t>(ss);
-
-//     result.write(static_cast<enyx::md::hw::nxbus_axi>(nxbus_word));
-// }
-
-    template<typename Word>
+    template<typename T>
     static void
-    fill_tcp_stream(hls::stream<Word> & stream, ap_uint<8> session, std::string const & content)
+    fill_tcp_stream(
+        hls::stream<T> & stream,
+        ap_uint<8> session,
+        std::string const & content)
     {
-        static std::size_t const word_byte_count = Word::data_width / 8;
-        Word word = Word();
-        word.id = session;
-        word.data = 0;
+        
+        T stream_word = T();
+        stream_word.id = session;
+        stream_word.keep = 0xFFFF;
+        stream_word.data = 0;
+        std::istringstream iss (content);
+        std::string hexbyte_str;
 
-        std::istringstream iss(content);
+        const std::size_t word_byte_count = T::data_width / 8;
+        const std::size_t content_byte_count = content.size() / 2;
+        bool last = false;
 
-        for (std::size_t i = 0, words = content.size(); 2*i < words; ) {
-            // iterate over each byte
+        std::size_t i = 0;
+        while ((iss >> std::setw(2) >> hexbyte_str)) {
+            std::istringstream hexbyte_iss (hexbyte_str);
+            uint16_t hexbyte_u16; // 8-bit types will not work for some reason
+            hexbyte_iss >> std::setbase(16) >> hexbyte_u16;
 
-            word.data <<= 8;
-            word.data(8-1, 0) = enyx::get_from_hex_stream_as< ap_uint<8> >(iss);
+            stream_word.data <<= 8;
+            stream_word.data(8-1, 0) = hexbyte_u16;
 
             ++i;
-            if (i % word_byte_count == 0) {
-                word.last = (i == content.size() - 1);
-                stream.write(word);
-                word.data = 0;
+            if ((i % word_byte_count) == 0) {
+                last = (i == content_byte_count);
+                std::cout << "[TB] pushed TCP word: " << std::dec
+                    << "i: " << i << ", "
+                    << "content_byte_count: " << content_byte_count << ", "
+                    << "last: " << last << ", "
+                    << std::endl;
+                stream.write(stream_word);
+                std::cout << "[TB] pushed TCP word: " << std::hex
+                    << "id: " << std::setw(2) << stream_word.id << ", "
+                    << "bytes: " << stream_word.data << ", "
+                    << "last: " << std::dec << last << std::hex << ", "
+                    << "keep: " << stream_word.keep << ", "
+                    << std::endl;
+
+                stream.write(stream_word);
+                stream_word.data = 0;
             }
         }
 
-        std::size_t const remaining_byte_count = content.size() % word_byte_count;
-        if (remaining_byte_count)
-        {
-            word.data <<= (word_byte_count - remaining_byte_count) * 8;
-            word.last = 1;
-            stream.write(word);
+        if (! last) {
+            const std::size_t remaining_bytes = content_byte_count % word_byte_count;
+            assert(remaining_bytes && "expected at least one trailing byte");
+
+            for (auto i = remaining_bytes; i < word_byte_count; i++) {
+                const uint8_t null_byte = 0xCD;
+                stream_word.keep.clear(word_byte_count -1 - i);
+
+                stream_word.data <<= 8;
+                stream_word.data(8-1, 0) = null_byte;
+            }
+
+            last = true;
+            std::cout << "[TB] pushed TCP word: " << std::hex
+                << "id: " << std::setw(2) << stream_word.id << ", "
+                << "bytes: " << stream_word.data << ", "
+                    << "last: " << std::dec << last << std::hex << ", "
+                << "keep: " << stream_word.keep << ", "
+                << std::endl;
         }
+        
+        assert(last && "missing end of packet");
     }
 
     /**
@@ -272,29 +281,39 @@ private:
 
         while (true) {
             //enyx::oe::hwstrat::tcp_reply_payload tcp_word;
+            bool session_eof = true;
+            bool content_eof = true;
             ap_uint<8> session;
+            std::string content;
 
             std::string session_line;
             for (std::string session_line; std::getline(packet_sessions, session_line); ) { 
-                //std::cout << "~~~~ session: " << session_line << std::endl;
                 if (!session_line.empty() && session_line[0] != '#') {
                     std::cout << "~~~~ session data: " << session_line << std::endl;
                     std::istringstream ss(session_line);
                     session =  enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+                    session_eof = false;
                     break;
                 }
+                session_eof = true;
             }
-
+            
             std::string content_bytes;
             for (std::string content_bytes; std::getline(packet_bytes, content_bytes); ) { 
-                //std::cout << "~~~~ session: " << content_bytes << std::endl;
                 if (!content_bytes.empty() && content_bytes[0] != '#') {
-                    std::cout << "~~~~ content bytes: " << content_bytes << std::endl;
+                    //std::cout << "~~~~ content bytes: " << content_bytes << std::endl;
+                    content = std::string(content_bytes);
+                    content_eof = false;
                     break;
                 }
+                content_eof = true;
             }
 
-            fill_tcp_stream(data_in, session, content_bytes);
+            if (content_eof)
+                break;
+
+            std::cout << "~~~~ content bytes: " << content << std::endl;
+            fill_tcp_stream(data_in, session, content);
         }
         throw std::invalid_argument("stop ~~");
 
@@ -327,7 +346,6 @@ private:
             if (! l.empty() && l[0] != '#')
                 enyx::fill_stream_with_text(data_in, l);
     }
-
 
     static void
     convert_string_to_cpu2fpgaheader(enyx::oe::hwstrat::cpu2fpga_header & out,  std::istringstream& in)
