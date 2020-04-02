@@ -42,6 +42,7 @@ void TcpConsumer::p_consume_tcp(hls::stream<enyx::oe::hwstrat::tcp_reply_payload
              // This is being reported to Xilinx.
 
            // do something for session #2
+            //assert(false && "ERROR");
            std::cout << "[TCP_CONSUMER] Received data for session id #2 ! Triggering collection #1024" << std::endl;
 
            // -- Example action code : please remove this in production unless you

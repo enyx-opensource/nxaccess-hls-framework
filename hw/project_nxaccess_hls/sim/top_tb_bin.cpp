@@ -75,7 +75,7 @@ private:
         read_dma_config_in_from_file(dma_data_in, generate_filename("dma_user_in", ".ref", Index, burst_index));
         std::cout << "[TB] Loaded " << std::dec << dma_data_in.size() << " configuration commands" << std::endl;
         int iteration = 0;
-        while (dma_data_in.size() > 0) {
+        while (! dma_data_in.empty()) {
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
             std::cout << "[TB] " << std::dec << 
                 "iteration #" << iteration << ": " <<
@@ -83,59 +83,67 @@ private:
                 std::endl;
             ++iteration;
         }
+        assert(dma_data_in.empty() && "Failed to upload all settings into the HLS module");
 
-        std::cout << "[TB] Loading data contents" << std::endl;
+        std::cout << "[TB] Loading market data contents" << std::endl;
 
         read_nxbus_from_file(nxbus_in, generate_filename("nxbus_in", ".ref", Index, burst_index));
         std::cout << "[TB] Loaded " << std::dec << nxbus_in.size() << " nxbus packets" << std::endl;
+        
+        std::cout << "[TB] Loading TCP reply data contents" << std::endl;
+        
         read_tcp_from_files(
             tcp_replies_in,
             "top_tb_tcp_bin/tcp_reply_session.ref.txt",
             "top_tb_tcp_bin/tcp_reply_data.ref.txt");
-        throw std::invalid_argument("stop ~~");
 
-        // Process ctrl.
-        std::cout << "[TEST] Running on triggers...\n";
-        // while there's some input in TCP or nxBus, run the algorithm
+        std::cout << "[TB] Loaded " << std::dec << tcp_replies_in.size() << " TCP ingress words" << std::endl;
+
+        std::cout << "[TB] Running kernel" << std::endl;
+
         int input_stimuli_count = std::max(nxbus_in.size(), tcp_replies_in.size());
         for (int i =0; i < input_stimuli_count; ++i) {
-            std::cout << "[TB] Main processing loop iteration#" << std::dec << i << "\n";
+            std::cout << "[TB] Main processing loop iteration#" << std::dec << i << std::endl;
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+            std::cout << "[TB] " << std::dec
+                << "remaining market data: " << nxbus_in.size() << " words, "
+                << "remaining TCP payload: " << tcp_replies_in.size() << " words, "
+                << "output DMA: " << dma_data_out.size() << " words, "
+                << "output trigger: " << trigger_out.size() << " events, "
+                << std::endl;
         }
-
-        
-
-
-
-
-        // ensure all entries where consumed, if not, there's a problem. For instance, some backpressure could be
-        // a legitimate reason
-        assert(nxbus_in.empty());
-        assert(tcp_replies_in.empty()); // ensure all entries where consumed, if not, there's a problem.
+        assert(nxbus_in.empty() && "HLS module failed to sink all market data words");
+        assert(tcp_replies_in.empty() && "HLS module failed to sink all TCP reply words");
 
         const int TOTAL_ALGORITHM_EXPECTED_LATENCY = 10;
         for(int i = 0 ; i < TOTAL_ALGORITHM_EXPECTED_LATENCY; ++i)
         {
-            std::cout << "[TB] Post processing loop iteration#" << std::dec << i << "\n";
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+            std::cout << "[TB] " << std::dec
+                << "remaining market data: " << nxbus_in.size() << " words, "
+                << "remaining TCP payload: " << tcp_replies_in.size() << " words, "
+                << "output DMA: " << dma_data_out.size() << " words, "
+                << "output trigger: " << trigger_out.size() << " events, "
+                << std::endl;
         }
 
-        {
-            // generates trigger output to file. consumes trigger_out bus
-            auto triggered = dump_trigger_to_file(trigger_out, generate_filename("trigger_out", ".gen", Index, burst_index));
-            auto trigger_ref = read_trigger_from_file(generate_filename("trigger_out", ".ref", Index, burst_index));
-            std::cout << "[TEST] Comparing trigger output with ref file...\n";
-            compare_generated_and_reference(trigger_ref, triggered);
-            std::cout << "[TEST] Trigger output compared successfully ! \n";
-        }
+        // generates trigger output to file. consumes trigger_out bus
+        auto triggered = dump_trigger_to_file(trigger_out, generate_filename("trigger_out", ".gen", Index, burst_index));
+        auto trigger_ref = read_trigger_from_file(generate_filename("trigger_out", ".ref", Index, burst_index));
+        compare_generated_and_reference(trigger_ref, triggered);
+
+        // throw std::invalid_argument("stop L98");
+        // std::cout << "[TEST] Comparing trigger output with ref file...\n";
+        // std::cout << "[TEST] Trigger output compared successfully ! \n";
 
         // Flush the DMA out, as we don't dump it, nor test it.
         while(!dma_data_out.empty()) {
             dma_data_out.read();
         }
 
+        // std::cout << "\tBurst " << burst_index << " End" << std::endl;
 
-        std::cout << "\tBurst " << burst_index << " End" << std::endl;
+        std::cout << "[TB] Completed." << std::endl;
     }
 
     /// Give a filename from prefix, index & burst for testbench input & output
@@ -220,18 +228,18 @@ private:
             ++i;
             if ((i % word_byte_count) == 0) {
                 last = (i == content_byte_count);
-                std::cout << "[TB] pushed TCP word: " << std::dec
-                    << "i: " << i << ", "
-                    << "content_byte_count: " << content_byte_count << ", "
-                    << "last: " << last << ", "
-                    << std::endl;
+                // std::cout << "[TB] pushed TCP word: " << std::dec
+                //     << "i: " << i << ", "
+                //     << "content_byte_count: " << content_byte_count << ", "
+                //     << "last: " << last << ", "
+                //     << std::endl;
                 stream.write(stream_word);
-                std::cout << "[TB] pushed TCP word: " << std::hex
-                    << "id: " << std::setw(2) << stream_word.id << ", "
-                    << "bytes: " << stream_word.data << ", "
-                    << "last: " << std::dec << last << std::hex << ", "
-                    << "keep: " << stream_word.keep << ", "
-                    << std::endl;
+                // std::cout << "[TB] pushed TCP word: " << std::hex
+                //     << "id: " << std::setw(2) << stream_word.id << ", "
+                //     << "bytes: " << stream_word.data << ", "
+                //     << "last: " << std::dec << last << std::hex << ", "
+                //     << "keep: " << stream_word.keep << ", "
+                //     << std::endl;
 
                 stream.write(stream_word);
                 stream_word.data = 0;
@@ -251,12 +259,12 @@ private:
             }
 
             last = true;
-            std::cout << "[TB] pushed TCP word: " << std::hex
-                << "id: " << std::setw(2) << stream_word.id << ", "
-                << "bytes: " << stream_word.data << ", "
-                    << "last: " << std::dec << last << std::hex << ", "
-                << "keep: " << stream_word.keep << ", "
-                << std::endl;
+            // std::cout << "[TB] pushed TCP word: " << std::hex
+            //     << "id: " << std::setw(2) << stream_word.id << ", "
+            //     << "bytes: " << stream_word.data << ", "
+            //         << "last: " << std::dec << last << std::hex << ", "
+            //     << "keep: " << stream_word.keep << ", "
+            //     << std::endl;
         }
         
         assert(last && "missing end of packet");
@@ -289,7 +297,6 @@ private:
             std::string session_line;
             for (std::string session_line; std::getline(packet_sessions, session_line); ) { 
                 if (!session_line.empty() && session_line[0] != '#') {
-                    std::cout << "~~~~ session data: " << session_line << std::endl;
                     std::istringstream ss(session_line);
                     session =  enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
                     session_eof = false;
@@ -301,7 +308,6 @@ private:
             std::string content_bytes;
             for (std::string content_bytes; std::getline(packet_bytes, content_bytes); ) { 
                 if (!content_bytes.empty() && content_bytes[0] != '#') {
-                    //std::cout << "~~~~ content bytes: " << content_bytes << std::endl;
                     content = std::string(content_bytes);
                     content_eof = false;
                     break;
@@ -315,25 +321,6 @@ private:
             std::cout << "~~~~ content bytes: " << content << std::endl;
             fill_tcp_stream(data_in, session, content);
         }
-        throw std::invalid_argument("stop ~~");
-
-//   while(true)
-//   {
-//     fil1.read((char*)&e,sizeof(e));
-//     // do the checking right after a read()
-//     if (fil1.eof())
-//       break;
-//     e.display1();
-
-//     fil1.read((char*)&s,sizeof(s));
-//     s.display2();
-//   }   
-
-        // for (std::string l; std::getline(tcp_in, l); ) {
-        //     if (! l.empty() && l[0] != '#') {
-        //          tcp_reply_reply_payload_convert_tb(data_in,l);
-        //     }
-        // }
     }
 
     /// Reads words of DMA from file
