@@ -32,7 +32,8 @@ static void fill_header(user_dma_tick2cancel_notification& notification, Tick2ca
     // we encode the side of the decision but it's only for showing that we have a message type that could be use 
     // to transport several type of messages to host
     notification.header.msg_type = uint8_t(message_type); 
-    notification.header.length = sizeof(user_dma_tick2cancel_notification);
+    notification.header.length = 0x0030; // force length value since sizeof yield incorrect value because vivado (as of 2018.3) has trouble with packed structure
+    // notification.header.length = sizeof(user_dma_tick2cancel_notification);
 }
 
 
