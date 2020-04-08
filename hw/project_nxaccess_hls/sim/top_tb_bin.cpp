@@ -202,13 +202,16 @@ private:
     fill_tcp_stream(
         hls::stream<T> & stream,
         ap_uint<8> session,
-        std::string const & content)
+        std::string const & content,
+        ap_uint<20> user)
     {
         
         T stream_word = T();
         stream_word.id = session;
         stream_word.keep = 0xFFFF;
         stream_word.data = 0;
+        stream_word.user = 0;
+        
         std::istringstream iss (content);
         std::string hexbyte_str;
 
@@ -228,25 +231,27 @@ private:
             ++i;
             if ((i % word_byte_count) == 0) {
                 last = (i == content_byte_count);
-                // std::cout << "[TB] pushed TCP word: " << std::dec
-                //     << "i: " << i << ", "
-                //     << "content_byte_count: " << content_byte_count << ", "
-                //     << "last: " << last << ", "
-                //     << std::endl;
-                stream.write(stream_word);
-                // std::cout << "[TB] pushed TCP word: " << std::hex
-                //     << "id: " << std::setw(2) << stream_word.id << ", "
-                //     << "bytes: " << stream_word.data << ", "
-                //     << "last: " << std::dec << last << std::hex << ", "
-                //     << "keep: " << stream_word.keep << ", "
-                //     << std::endl;
+                stream_word.last = last;
+
+                if (last)
+                    stream_word.user = user;
+
+                std::cout << "[TB] pushed TCP word: " << std::hex
+                    << "id: " << std::setw(2) << stream_word.id << ", "
+                    << "bytes: " << stream_word.data << ", "
+                    << "last: " << std::dec << stream_word.last << std::hex << ", "
+                    << "keep: " << stream_word.keep << ", "
+                    << "user: " << stream_word.user << ", "
+                    << std::endl;
 
                 stream.write(stream_word);
                 stream_word.data = 0;
+                stream_word.user = 0;
             }
         }
 
         if (! last) {
+            // handle data packet with null bytes on eop
             const std::size_t remaining_bytes = content_byte_count % word_byte_count;
             assert(remaining_bytes && "expected at least one trailing byte");
 
@@ -259,14 +264,19 @@ private:
             }
 
             last = true;
-            // std::cout << "[TB] pushed TCP word: " << std::hex
-            //     << "id: " << std::setw(2) << stream_word.id << ", "
-            //     << "bytes: " << stream_word.data << ", "
-            //         << "last: " << std::dec << last << std::hex << ", "
-            //     << "keep: " << stream_word.keep << ", "
-            //     << std::endl;
+            stream_word.last = last;
+            stream_word.user = user;
+
+            std::cout << "[TB] pushed TCP word: " << std::hex
+                << "id: " << std::setw(2) << stream_word.id << ", "
+                << "bytes: " << stream_word.data << ", "
+                << "last: " << std::dec << stream_word.last << std::hex << ", "
+                << "keep: " << stream_word.keep << ", "
+                << "user: " << stream_word.user << ", "
+                << std::endl;
+
+            stream.write(stream_word);
         }
-        
         assert(last && "missing end of packet");
     }
 
@@ -292,6 +302,8 @@ private:
             bool session_eof = true;
             bool content_eof = true;
             ap_uint<8> session;
+            ap_uint<8> tcp_error;
+
             std::string content;
 
             std::string session_line;
@@ -299,12 +311,18 @@ private:
                 if (!session_line.empty() && session_line[0] != '#') {
                     std::istringstream ss(session_line);
                     session =  enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+                    tcp_error = enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+                    std::cout << "[TB] " << std::dec
+                        << "session: " << session << ", "
+                        << "tcp_error: " << tcp_error << ", "
+                        << std::endl;
+
                     session_eof = false;
                     break;
                 }
                 session_eof = true;
             }
-            
+            //assert(false);
             std::string content_bytes;
             for (std::string content_bytes; std::getline(packet_bytes, content_bytes); ) { 
                 if (!content_bytes.empty() && content_bytes[0] != '#') {
@@ -319,7 +337,7 @@ private:
                 break;
 
             std::cout << "~~~~ content bytes: " << content << std::endl;
-            fill_tcp_stream(data_in, session, content);
+            fill_tcp_stream(data_in, session, content, tcp_error);
         }
     }
 
