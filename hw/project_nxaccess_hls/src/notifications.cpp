@@ -35,6 +35,8 @@
 #include "configuration.hpp"
 #include "tick2cancel.hpp"
 #include "tick2trade.hpp"
+#include "tcp_consumer.hpp"
+
 
 namespace nxmd = enyx::md::hw;
 namespace nxoe  = enyx::oe::hwstrat;
@@ -50,10 +52,13 @@ namespace nxaccess_hw_algo {
 /// We can consider this not clean from a design & maintenance point of view ; right. Another approach might 
 /// be to use variadic templates providing writers functions so that this code could be generic. Its complexity
 /// would not serve anymore the documentation purpose.
-void Notifications::p_broadcast_notifications(hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in, 
-                              hls::stream<user_dma_tick2trade_notification> &tick2trade_in,
-                              hls::stream<user_dma_update_instrument_configuration_ack> &config_acks_in,
-                              hls::stream<enyx::hfp::dma_user_channel_data_out> & conf_out)
+void Notifications::p_broadcast_notifications(
+    hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in, 
+    hls::stream<user_dma_tick2trade_notification> &tick2trade_in,
+    hls::stream<user_dma_update_instrument_configuration_ack> &config_acks_in,
+    hls::stream<user_dma_tcp_consumer_notification> &tcp_consumer_in,
+    
+    hls::stream<enyx::hfp::dma_user_channel_data_out> & conf_out)
 {
 #pragma HLS INLINE recursive
 #pragma HLS PIPELINE enable_flush
@@ -69,13 +74,15 @@ void Notifications::p_broadcast_notifications(hls::stream<user_dma_tick2cancel_n
 
     static enum { Input_Tick2trade = 1,
                  Input_Tick2cancel = 2,
-                 Input_Configuration = 3 }
+                 Input_Configuration = 3,
+                 Input_TcpConsumer = 4, }
                  input_type;  // input type being processed
     #pragma HLS RESET variable=input_type
    
     static user_dma_tick2trade_notification             notif_t2trade; 
     static user_dma_update_instrument_configuration_ack notif_config;
     static user_dma_tick2cancel_notification            notif_t2cancel;
+    static user_dma_tcp_consumer_notification           notif_tcp;
 
 // note on this FSM : we could remove one state and spare 1 clk cycle; 
 // we choose to separate the IDLE state from WORD1 for clarity.
@@ -94,6 +101,10 @@ switch(current_state) {
             } else if (!tick2cancel_in.empty()) {
                 input_type = Input_Tick2cancel;
                 notif_t2cancel = tick2cancel_in.read();
+                current_state = WORD1;
+            } else if (!tcp_consumer_in.empty()) {
+                input_type = Input_TcpConsumer;
+                notif_tcp = tcp_consumer_in.read();
                 current_state = WORD1;
             }   
             // else { // no status change, nothing read ! }
@@ -119,6 +130,12 @@ switch(current_state) {
         case Input_Tick2trade: {
             enyx::hfp::dma_user_channel_data_out out;
             out = Tick2trade::notification_to_word(notif_t2trade, 1);
+            conf_out.write(out);
+            break;
+        }
+        case Input_TcpConsumer: {
+            enyx::hfp::dma_user_channel_data_out out;
+            out = TcpConsumer::notification_to_word(notif_tcp, 1);
             conf_out.write(out);
             break;
         }
@@ -148,6 +165,13 @@ switch(current_state) {
         case Input_Tick2trade: {
             enyx::hfp::dma_user_channel_data_out out;
             out = Tick2trade::notification_to_word(notif_t2trade, 2);
+            conf_out.write(out);
+            current_state = IDLE; // we have finished for this notification type
+            break;
+        }
+        case Input_TcpConsumer: {
+            enyx::hfp::dma_user_channel_data_out out;
+            out = TcpConsumer::notification_to_word(notif_tcp, 2);
             conf_out.write(out);
             current_state = IDLE; // we have finished for this notification type
             break;
