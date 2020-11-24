@@ -29,25 +29,31 @@ csynth:
 	$(VIVADO_CMD) csynth.tcl
 cosim:
 	$(VIVADO_CMD) cosim.tcl
+
 open_gui:
 	$(VIVADO_CMD) -p $(PROJECT)
 
 $(PY_DIR)/venv:
 	$(PY_DIR)/install
 
-firmware: $(PY_DIR)/venv
-	$(PY_DIR)/rebuild_firmware -v \
+firmware: load_configuration build_firmware
+
+load_configuration: $(PY_DIR)/venv
+	$(PY_DIR)/load_configuration -v \
 		./../../devFramework
+
+build_firmware: $(PY_DIR)/venv
+	$(PY_DIR)/build_firmware -v \
+		./../../devFramework
+
+clean:
+	echo "This will clean the vivado project files (not the source code)"
+	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
+
 
 view_diff_trigger:
 	vimdiff project_nxaccess_hls/sim/top_tb_0/tr*{gen,ref}*
 
 show_timing_info:
-	@grep -B1 -A10  "Design Timing Summary" ../../devFramework/project/synth_00.runs/impl_1/shell_top_bittware_xupp3r_vu9p_mem_eth_dyn_timing_summary_postroute_physopted.rpt
+	@grep -B1 -A10  "Design Timing Summary" ../../devFramework/project/synth_00.runs/impl_1/shell_top_bittware_xupp3r_vu9p_mem_eth_dyn_timing_summary_routed.rpt
 
-clean:
-	echo "This will clean the vivado project files (not the source code)"
-	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
-	rm $(PY_DIR)/venv -rf
-	find $(PROJECT)/sim/ -name "*.txt.gen" -type f -delete
-	find $(PROJECT)/sim/ -name "*.gen.txt" -type f -delete

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# This script activates the associated virtual environment and calls the entry
+# point defined in the setup.py installation configuration script.
+
+# shellcheck source=/dev/null
+. "$(dirname "$(realpath "$0")")/venv/bin/activate" \
+    && exec load_configuration "$@"

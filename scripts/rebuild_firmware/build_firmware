@@ -4,4 +4,4 @@
 
 # shellcheck source=/dev/null
 . "$(dirname "$(realpath "$0")")/venv/bin/activate" \
-    && exec rebuild_firmware "$@"
+    && exec build_firmware "$@"

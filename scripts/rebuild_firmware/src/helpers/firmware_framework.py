@@ -2,13 +2,13 @@ import io
 import json
 import logging
 import os
+import re
 import select
 import subprocess
 from pathlib import Path
 from typing import List
 
 from ruamel.yaml import YAML
-
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,20 @@ def get_vivado_bin_file() -> str:
 
     return vivado_bin
 
+def get_vivado_version_from_path(path):
+    (root_dir,file) = os.path.split(path)
+    path_list = []
+    while root_dir != os.path.sep:
+        path_list.append(file)
+        (root_dir,file) = os.path.split(root_dir)
+    if path_list[0] != 'vivado':
+            raise Exception(
+                'Error vivado path : Last word of vivado path is {} while it should be vivado'.format(path_list[0]))
+    if path_list[1] != 'bin':
+        raise Exception(
+            'Error vivado path : Prevous last word of vivado path is {} while it should be bin'.format(path_list[1]))
+    return path_list[2]
+
 
 class FirmwareFramework:
     """Enyx Firmware Framework class
@@ -56,14 +70,13 @@ class FirmwareFramework:
     Provides methods for managing projects relying on exported framework.
     """
 
-    EXPECTED_BASE_DIRECTORIES = ['project',  'rtl',  'scripts']
-    SANDBOX_PARENT_HIERARCHY = 'rtl/ip_cores/others'
-    MAIN_SCRIPT = './generate_firmware'
+    MAIN_SCRIPT = 'generate_firmware'
     PRINT_VERSION = '--version'
-    CREATE_PROJECT = '--project-creation'
-    BUILD_PROJECT = '--project-compilation'
-    FIRMWARE_CONFIG_FILE = 'scripts/firmware_config.yaml'
-    SUPPORTED_LICENSE_VERSIONS = [1]
+    ARG_DEVFRAMEWORK = 'devframework.yaml'
+    CREATE_PROJECT = '-pec'
+    TOP_NAME_LOCATION = 'rtl/tops'
+    DEVFRAMEWORK_CONFIG_FILE = 'scripts/devframework.yaml'
+    SUPPORTED_LICENSE_VERSIONS = [1,2]
     CORE_LICENSES = [
         'ENYX_IP_LICENSE_HFP',
         'ENYX_IP_LICENSE_TCP',
@@ -82,13 +95,18 @@ class FirmwareFramework:
             logging.warning('Dry run mode')
 
         self.path = FirmwareFramework.get_framework_root(path=path)
-        self.sandbox_path = \
-            FirmwareFramework.get_sandbox_directory(path=self.path)
+        self.sandbox_path = os.path.join(self.path,"rtl/sandbox/enyx_oe_hwstrat_hls_demo/src")
+        self.topName = self.get_topName()
         logging.info(f'New FirmwareFramework with path {self.path} and '
-                     f'sandbox in {self.sandbox_path}')
-        self.config_file = self.path / FirmwareFramework.FIRMWARE_CONFIG_FILE
+                     f'sandbox in {self.sandbox_path} '
+                     f'for top name {self.topName}')
+        self.config_file = os.path.join(self.path, FirmwareFramework.TOP_NAME_LOCATION, self.topName, 'src', 'firmware_config.yaml')
         self.firmware_config = \
             FirmwareFramework.load_config(path=self.config_file)
+        self.devframeworkYAML_file = os.path.join(self.path,FirmwareFramework.DEVFRAMEWORK_CONFIG_FILE)
+        self.devframeworkYAML_config = \
+            FirmwareFramework.load_config(path=self.devframeworkYAML_file)
+        self.top_recipe_file = os.path.join(self.path, FirmwareFramework.TOP_NAME_LOCATION, self.topName, 'recipe.txt')
 
     @staticmethod
     def get_framework_root(path: Path) -> Path:
@@ -102,45 +120,39 @@ class FirmwareFramework:
         # convert to absolute path
         path = os.path.abspath(path)
 
-        framework_path_candidates = list()
-        for (root, dirs, _) in os.walk(path):
-            if all(directory in dirs for directory in
-                   FirmwareFramework.EXPECTED_BASE_DIRECTORIES):
-                framework_path_candidates.append(Path(root))
+        # Quick check to see if the folder looks like legit devFramework.
+        # More exhaustive checks may be done here
+        framework_tree = list(os.walk(path))
 
-        if not framework_path_candidates:
-            raise FileNotFoundError(
-                f'no firmware frameworks found inside directory {str(path)}')
-        if len(framework_path_candidates) > 1:
-            raise FileNotFoundError(
-                f'multiple firmware frameworks found inside {str(path)}: '
-                f'{framework_path_candidates}')
-        framework_root = Path(framework_path_candidates[0])
-        logging.debug(f'Located framework root directory: {framework_root}')
+        if not framework_tree:
+            raise Exception('No folder found at {}'.format(path))
 
-        return framework_root
+        sandbox_expected_location = os.path.join(framework_tree[0][0],"rtl/sandbox/")
+        sandbox_location = [i for i in framework_tree if os.path.samefile(sandbox_expected_location,i[0])]
 
-    @staticmethod
-    def get_sandbox_directory(path: Path) -> Path:
-        """
-        Get the directory inside the framework containing sandbox HDL files.
+        if len(sandbox_location) != 1:
+            raise Exception(
+                'No legit devFramework folder found at {}.There is {} sanbox location while 1 location is expected '.format(path,len(sandbox_location)))
 
-        :param path: framework root path
-        :return: path to the directory containing unencrypted HDL files
-        """
+        # if (sandbox_location[0][1]).sort() != (['enyx_oe_hwstrat_hls_demo', 'nxaccess_sandbox']).sort():
+        #     raise Exception(
+        #         'No legit devFramework folder found at {}. Folders at sandbox location are {} instead of [\'enyx_oe_hwstrat_hls_demo\', \'nxaccess_sandbox\']'.format(path,sandbox_location[0][1]))
 
-        sandbox_directory = None
-        for (root, _, _) in os.walk(path):
-            if FirmwareFramework.SANDBOX_PARENT_HIERARCHY in root:
-                sandbox_directory = Path(root)
-                break
-        if not sandbox_directory:
-            raise FileNotFoundError(
-                f'No sandbox directory located inside {str(path)}')
-        logging.debug(
-            f'Located sandbox directory: {str(sandbox_directory)}')
+        if sandbox_location[0][2] != []:
+            raise Exception(
+                'No legit devFramework folder found at {}. Files at sandbox location are {} instead of []'.format(path,sandbox_location[0][2]))
 
-        return sandbox_directory
+
+        logging.debug(f'Located framework root directory: {path}')
+
+        return path
+
+    def get_topName(self):
+        _location = os.path.join(self.path,FirmwareFramework.TOP_NAME_LOCATION)
+        _top_list = os.listdir(_location)
+        if len(_top_list) != 1:
+            raise Exception('Only 1 top is expected at location {}. Top found are {}'.format(_location, _top_list))
+        return _top_list[0]
 
     @staticmethod
     def load_config(path: Path):
@@ -175,7 +187,7 @@ class FirmwareFramework:
 
         if not dry_run:
             transcript = []
-            logging.debug('Running command: {}'.format(' '.join(command)))
+            logging.debug('Running command: {} at location {}'.format(' '.join(command), work_directory))
             process = subprocess.Popen(
                     args=command, bufsize=0, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -202,7 +214,7 @@ class FirmwareFramework:
             logging.info(f'Dry run, skipping command: {" ".join(command)}')
             return list()
 
-    def dump_config(self, filename: Path):
+    def dump_config(self, filename: Path, config):
         """Dump current firmware configuration in the given file path/name
 
         :param filename: file name in which settings are to be stored
@@ -210,13 +222,13 @@ class FirmwareFramework:
         """
 
         stream = io.StringIO()
-        YAML().dump(self.firmware_config, stream)
+        YAML().dump(config, stream)
 
         if self.dry_run:
             logger.info(f'dry run: skipping writing {str(filename)}')
             return None
 
-        YAML().dump(self.firmware_config, open(file=filename, mode='w'))
+        YAML().dump(config, open(file=filename, mode='w'))
         return filename
 
     def update_license(self, filename: Path):
@@ -226,22 +238,25 @@ class FirmwareFramework:
         :return: nothing
         """
 
-        # Load and check license data
+        # Check if file exists
+        if not filename:
+            logger.info('no license file specified, skipping license update')
+            return None
+        logger.info('updating license information')
 
+        # Load and check license data
         license_data = json.load(open(filename))['enyx_firmware_license']
         if license_data['version'] not in \
                 FirmwareFramework.SUPPORTED_LICENSE_VERSIONS:
             raise ValueError('Unsupported license file version')
 
         # Compare against already existing licensing data
-
         app_cfg = self.firmware_config['Application configuration']
         if any(core_license in app_cfg
                for core_license in FirmwareFramework.CORE_LICENSES):
             logger.warning('License data already present, updating with new values')
 
         # update licenses
-
         for core_name, core_license in license_data['cores'].items():
             core_license_name = core_name.upper()
             app_cfg[core_license_name] = core_license
@@ -256,13 +271,17 @@ class FirmwareFramework:
         :return: number of settings updated
         """
 
-        # Load user provided firmware configuration
+        # Check if file name exist
+        if not filename:
+            logger.info('no user config specified, skipping config update')
+            return 0
+        logger.info('updating user configuration')
 
+        # Load user provided firmware configuration
         contents = YAML().load(open(filename).read())
         logger.debug(f'loaded {len(contents.keys())} section from {filename}')
 
         # update firmware configuration
-
         updates = 0
         for (k, v) in contents.items():
             if k not in self.firmware_config.keys():
@@ -274,26 +293,66 @@ class FirmwareFramework:
 
         return updates
 
-    def build(self) -> int:
+    def update_commit(self, value):
+        """Update the firmware framework configuration  using the given commit sha
+
+        :param filename: user firmware configuration file
+        :return: number of settings updated
+        """
+
+        logger.info('updating user configuration whith sha {}'.format(value))
+
+        if 'SANDBOX_REVISION' not in self.firmware_config['Application configuration'].keys():
+            raise ValueError(f'section SANDBOX_REVISION is missing from firmware configuration')
+
+        self.firmware_config['Application configuration']['SANDBOX_REVISION'] = value
+
+    def update(self, filename, field, value):
+        """Update the firmware framework configuration  using the given commit sha
+
+        :param filename: user firmware configuration file
+        :return: number of settings updated
+        """
+        if field in filename:
+            logger.info('Overwritte {} field with value {}'.format(field,value))
+            filename[field] = value
+        else:
+            logger.info('Create new {} field with value {}'.format(field,value))
+            filename[field] = value
+
+    def update_synthesis_tool(self):
+        eda_toolchain = get_vivado_bin_file()  # Xilinx only at the moment
+        vivado_version = str(get_vivado_version_from_path(eda_toolchain))
+        top_name_vivado_version = str(self.get_vivado_version_from_top())
+        if vivado_version != top_name_vivado_version:
+            raise Exception(
+                'Error vivado version for top is {} while system tool vivado version is {}'.format(top_name_vivado_version,vivado_version))
+        logger.info('Update vivado {} path with {}'.format(vivado_version,eda_toolchain))
+        self.devframeworkYAML_config['SYNTHESIS_TOOL_BIN']['xilinx']['xilinx'+vivado_version] = eda_toolchain
+
+    def get_vivado_version_from_top(self):
+        with open(self.top_recipe_file, 'r') as f:
+            recipe = json.load(f)
+        if 'vivado' not in recipe.keys():
+            raise Exception("Error : field vivado is not present in top recipe {}".format(self.top_recipe_file))
+        return recipe['vivado']
+
+    def build(self, dry_run) -> int:
         """
         Launch the build process
 
-        :return: zero
+        :return: return code
         """
 
-        # The Enyx client firmware framework requires a path to the FPGA vendor
-        # toolchain.
-
-        scripts_directory = self.path / 'scripts'
-        eda_toolchain = get_vivado_bin_file()  # Xilinx only at the moment
+        scripts_directory = os.path.join(self.path,'scripts')
 
         # Display the Firmware Framework version of support purposes
 
         print_version_command = [
-            FirmwareFramework.MAIN_SCRIPT, FirmwareFramework.PRINT_VERSION]
+            os.path.join(scripts_directory,FirmwareFramework.MAIN_SCRIPT), FirmwareFramework.PRINT_VERSION]
         version = self.run(
             command=print_version_command,
-            work_directory=scripts_directory,
+            work_directory=None,
             dry_run=False)
         logging.debug(f'Firmware Framework self reported version: {version}')
 
@@ -302,21 +361,18 @@ class FirmwareFramework:
         # files.
 
         create_project_command = [
-            FirmwareFramework.MAIN_SCRIPT,
-            FirmwareFramework.CREATE_PROJECT,
-            eda_toolchain]
-        self.run(
+            os.path.join(scripts_directory,FirmwareFramework.MAIN_SCRIPT),
+            os.path.join(scripts_directory,FirmwareFramework.ARG_DEVFRAMEWORK),
+            self.topName,
+            FirmwareFramework.CREATE_PROJECT]
+        transcript = self.run(
             command=create_project_command,
-            work_directory=scripts_directory)
+            work_directory=None,
+            dry_run=dry_run)
 
-        # Rebuild the FPGA firmware
 
-        build_project_command = [
-            FirmwareFramework.MAIN_SCRIPT,
-            FirmwareFramework.BUILD_PROJECT,
-            eda_toolchain]
-        self.run(
-            command=build_project_command,
-            work_directory=scripts_directory)
+        if any([re.search(r'Failed ".+?" after', line) for line in transcript]):
+            logging.error(f'Build project failure reported by firmware framework')
+            return 1
 
         return os.EX_OK

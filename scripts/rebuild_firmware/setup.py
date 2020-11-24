@@ -12,7 +12,8 @@ setup(
     author='Enyx',
     entry_points={
         'console_scripts': [
-            'rebuild_firmware = flows.firmware:rebuild',
+            'load_configuration = flows.firmware:load_configuration',
+            'build_firmware = flows.firmware:build_firmware',
         ]
     },
     install_requires=requirements,
