@@ -1,0 +1,21 @@
+# ------------------------------------------------------------------------------
+# TCP session values
+# - hexadecimal values
+# - one line per packet (i.e. one line in tcp_reply_data.ref.txt)
+# - implementation may support less sessions (i.e. 4 instead of 256)
+# ------------------------------------------------------------------------------
+# 8b 8b
+# XX 0X
+#  |  |
+#  |  +--- error bit on EOP: 0: cleared; 1: error bit is set on EOP
+#  |
+#  +--- session of ingress TCP payload
+# ------------------------------------------------------------------------------
+
+# first packet
+40 00
+
+# second packet
+03 00
+40 01
+02 00

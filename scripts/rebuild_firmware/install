@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# This script installs the required Python virtual environment (venv).
+
+# Exit script immediately if any command returned non-zero.
+set -e
+
+# Change working directory into the one containing this present script.
+cd "$(dirname "$(realpath "$0")")"
+
+# Print Python version for support purposes.
+python3 --version
+
+# Recreate from scratch and activate a new virtual environment.
+rm -rf ./venv && python3 -m venv ./venv && . ./venv/bin/activate
+
+# Update the newly created virtual environment.
+pip install --no-cache-dir --upgrade pip setuptools wheel
+pip install --no-cache-dir --editable .
+
+# Exit the virtual environment before returning to the shell.
+deactivate

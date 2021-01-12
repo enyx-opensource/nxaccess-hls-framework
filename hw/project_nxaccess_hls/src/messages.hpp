@@ -106,6 +106,29 @@ struct user_dma_tick2cancel_notification {
    # endif
 # endif
 
+/// Complete message layout to configure an instrument trigger, for FPGA->CPU comm
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
+struct user_dma_tcp_consumer_notification {
+    //16B 
+    struct enyx::oe::hwstrat::fpga2cpu_header header; // 8 bytes
+    uint32_t words; // length of ingress data packet in whole words
+    uint32_t bytes; // length of ingress data packet in bytes
+    //16B
+    uint16_t keep; // selected bytes on last word
+    uint16_t user; // user value on last word
+    uint16_t session;
+    char padding[12]; // pad to ensure 128b 
+};
+#  if __GNUC_MAJOR__ >= 5  // introduced with C++11 standard
+  static_assert(48 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
+# else
+   # if __GNUC_MAJOR__ >= 4 // only available on GCC 4.6+. What about clang ?
+     _Static_assert(48 == sizeof(user_dma_update_instrument_configuration_ack), "Size of user_dma_update_instrument_configuration is invalid");
+   # endif
+# endif
+
 
 /// Complete message layout to configure an instrument trigger, for CPU2FPGA comm
 #ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
@@ -141,7 +164,7 @@ enum fpga_modules_ids {
     Reserved4, // Reserved for enyx
     Reserved5, // Reserved for enyx
     Reserved6, // Reserved for enyx
-    Reserved7, // Reserved for enyx
+    TcpConsumer, // Module which sinks TCP payload data
     InstrumentDataConfiguration = 8, // Module that handle instrument configuration, see configuration.hpp
     SoftwareTrigger = 9, // Not implemented yet, reserved for module handling trigger from software. // Not present in demonstration
     Tick2cancel = 10,   // tick2cancel strategy

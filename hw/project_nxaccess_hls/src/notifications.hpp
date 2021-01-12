@@ -49,6 +49,7 @@ class Notifications
     p_broadcast_notifications(hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in, 
                               hls::stream<user_dma_tick2trade_notification> &tick2trade_in,
                               hls::stream<user_dma_update_instrument_configuration_ack> &config_acks_in,
+                              hls::stream<user_dma_tcp_consumer_notification> &tcp_consumer_in,
                               hls::stream<enyx::hfp::dma_user_channel_data_out> & conf_out);
 
   

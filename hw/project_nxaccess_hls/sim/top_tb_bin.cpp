@@ -12,6 +12,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <stdexcept>
 
 #include <iostream>
 #include <fstream>
@@ -69,58 +70,80 @@ private:
         hls::stream<enyx::hfp::dma_user_channel_data_in>           dma_data_in("dma_user_channel_data_in");
         hls::stream<enyx::hfp::dma_user_channel_data_out>          dma_data_out("dma_user_channel_data_out");
 
-        // read reference file
-        std::cout << "[TEST] Reading nxbus_in ref file...\n";
-        read_dma_config_in_from_file(dma_data_in, generate_filename("dma_user_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loading DMA configuration" << std::endl;
 
-        int config_stimuli_count = dma_data_in.size();
-        for (int i =0; i < config_stimuli_count; ++i) {
-            std::cout << "[TB] Configuration related loop #" << std::dec << i << "\n";
+        read_dma_config_in_from_file(dma_data_in, generate_filename("dma_user_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loaded " << std::dec << dma_data_in.size() << " configuration commands" << std::endl;
+        int iteration = 0;
+        while (! dma_data_in.empty()) {
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+            std::cout << "[TB] " << std::dec << 
+                "iteration #" << iteration << ": " <<
+                "dma_data_in: " << dma_data_in.size() << " words remaining" <<
+                std::endl;
+            ++iteration;
         }
+        assert(dma_data_in.empty() && "Failed to upload all settings into the HLS module");
+
+        std::cout << "[TB] Loading market data contents" << std::endl;
 
         read_nxbus_from_file(nxbus_in, generate_filename("nxbus_in", ".ref", Index, burst_index));
-        read_tcp_reply_in_from_file(tcp_replies_in, generate_filename("tcp_reply_payload_in", ".ref", Index, burst_index));
+        std::cout << "[TB] Loaded " << std::dec << nxbus_in.size() << " nxbus packets" << std::endl;
+        
+        std::cout << "[TB] Loading TCP reply data contents" << std::endl;
+        
+        read_tcp_from_files(
+            tcp_replies_in,
+            "top_tb_tcp_bin/tcp_reply_session.ref.txt",
+            "top_tb_tcp_bin/tcp_reply_data.ref.txt");
 
-        assert(!nxbus_in.empty());
+        std::cout << "[TB] Loaded " << std::dec << tcp_replies_in.size() << " TCP ingress words" << std::endl;
 
-        // Process ctrl.
-        std::cout << "[TEST] Running on triggers...\n";
-        // while there's some input in TCP or nxBus, run the algorithm
+        std::cout << "[TB] Running kernel" << std::endl;
+
         int input_stimuli_count = std::max(nxbus_in.size(), tcp_replies_in.size());
         for (int i =0; i < input_stimuli_count; ++i) {
-            std::cout << "[TB] Main processing loop iteration#" << std::dec << i << "\n";
+            std::cout << "[TB] Main processing loop iteration#" << std::dec << i << std::endl;
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+            std::cout << "[TB] " << std::dec
+                << "remaining market data: " << nxbus_in.size() << " words, "
+                << "remaining TCP payload: " << tcp_replies_in.size() << " words, "
+                << "output DMA: " << dma_data_out.size() << " words, "
+                << "output trigger: " << trigger_out.size() << " events, "
+                << std::endl;
         }
-
-        // ensure all entries where consumed, if not, there's a problem. For instance, some backpressure could be
-        // a legitimate reason
-        assert(nxbus_in.empty());
-        assert(tcp_replies_in.empty()); // ensure all entries where consumed, if not, there's a problem.
+        assert(nxbus_in.empty() && "HLS module failed to sink all market data words");
+        assert(tcp_replies_in.empty() && "HLS module failed to sink all TCP reply words");
 
         const int TOTAL_ALGORITHM_EXPECTED_LATENCY = 10;
         for(int i = 0 ; i < TOTAL_ALGORITHM_EXPECTED_LATENCY; ++i)
         {
-            std::cout << "[TB] Post processing loop iteration#" << std::dec << i << "\n";
             algorithm_entrypoint(nxbus_in, dma_data_in, dma_data_out, trigger_out, tcp_replies_in);
+            std::cout << "[TB] " << std::dec
+                << "remaining market data: " << nxbus_in.size() << " words, "
+                << "remaining TCP payload: " << tcp_replies_in.size() << " words, "
+                << "output DMA: " << dma_data_out.size() << " words, "
+                << "output trigger: " << trigger_out.size() << " events, "
+                << std::endl;
         }
 
-        {
-            // generates trigger output to file. consumes trigger_out bus
-            auto triggered = dump_trigger_to_file(trigger_out, generate_filename("trigger_out", ".gen", Index, burst_index));
-            auto trigger_ref = read_trigger_from_file(generate_filename("trigger_out", ".ref", Index, burst_index));
-            std::cout << "[TEST] Comparing trigger output with ref file...\n";
-            compare_generated_and_reference(trigger_ref, triggered);
-            std::cout << "[TEST] Trigger output compared successfully ! \n";
-        }
+        // generates trigger output to file. consumes trigger_out bus
+        auto triggered = dump_trigger_to_file(trigger_out, generate_filename("trigger_out", ".gen", Index, burst_index));
+        auto trigger_ref = read_trigger_from_file(generate_filename("trigger_out", ".ref", Index, burst_index));
+        compare_generated_and_reference(trigger_ref, triggered);
+
+        // throw std::invalid_argument("stop L98");
+        // std::cout << "[TEST] Comparing trigger output with ref file...\n";
+        // std::cout << "[TEST] Trigger output compared successfully ! \n";
 
         // Flush the DMA out, as we don't dump it, nor test it.
         while(!dma_data_out.empty()) {
             dma_data_out.read();
         }
 
+        // std::cout << "\tBurst " << burst_index << " End" << std::endl;
 
-        std::cout << "\tBurst " << burst_index << " End" << std::endl;
+        std::cout << "[TB] Completed." << std::endl;
     }
 
     /// Give a filename from prefix, index & burst for testbench input & output
@@ -128,7 +151,8 @@ private:
     generate_filename(std::string const& prefix, std::string const &suffix, std::size_t index, std::size_t burst)
     {
         std::ostringstream out;
-        out << "top_tb_" << index << "/" << prefix << "_" << burst << suffix << ".txt";
+        out << "top_tb_tcp_bin/" << prefix << "_" << burst << suffix << ".txt";
+        std::cout << "[TB] ~~~: " << "top_tb_tcp_bin/" << prefix << "_" << burst << suffix << ".txt" << std::endl;
         return out.str();
     }
 
@@ -173,6 +197,160 @@ private:
         }
     }
 
+    template<typename T>
+    static void
+    fill_tcp_stream(
+        hls::stream<T> & stream,
+        ap_uint<8> session,
+        std::string const & content,
+        ap_uint<20> user)
+    {
+        
+        T stream_word = T();
+        stream_word.id = session;
+        stream_word.keep = 0xFFFF;
+        stream_word.data = 0;
+        stream_word.user = 0;
+        
+        std::istringstream iss (content);
+        std::string hexbyte_str;
+
+        const std::size_t word_byte_count = T::data_width / 8;
+        const std::size_t content_byte_count = content.size() / 2;
+        bool last = false;
+
+        std::size_t i = 0;
+        while ((iss >> std::setw(2) >> hexbyte_str)) {
+            std::istringstream hexbyte_iss (hexbyte_str);
+            uint16_t hexbyte_u16; // 8-bit types will not work for some reason
+            hexbyte_iss >> std::setbase(16) >> hexbyte_u16;
+
+            stream_word.data <<= 8;
+            stream_word.data(8-1, 0) = hexbyte_u16;
+
+            ++i;
+            if ((i % word_byte_count) == 0) {
+                last = (i == content_byte_count);
+                stream_word.last = last;
+
+                if (last)
+                    stream_word.user = user;
+
+                std::cout << "[TB] pushed TCP word: " << std::hex
+                    << "id: " << std::setw(2) << stream_word.id << ", "
+                    << "bytes: " << stream_word.data << ", "
+                    << "last: " << std::dec << stream_word.last << std::hex << ", "
+                    << "keep: " << stream_word.keep << ", "
+                    << "user: " << stream_word.user << ", "
+                    << std::endl;
+
+                stream.write(stream_word);
+                stream_word.data = 0;
+                stream_word.user = 0;
+            }
+        }
+
+        if (! last) {
+            // handle data packet with null bytes on eop
+            const std::size_t remaining_bytes = content_byte_count % word_byte_count;
+            assert(remaining_bytes && "expected at least one trailing byte");
+
+            for (auto i = remaining_bytes; i < word_byte_count; i++) {
+                const uint8_t null_byte = 0xCD;
+                stream_word.keep.clear(word_byte_count -1 - i);
+
+                stream_word.data <<= 8;
+                stream_word.data(8-1, 0) = null_byte;
+            }
+
+            last = true;
+            stream_word.last = last;
+            stream_word.user = user;
+
+            std::cout << "[TB] pushed TCP word: " << std::hex
+                << "id: " << std::setw(2) << stream_word.id << ", "
+                << "bytes: " << stream_word.data << ", "
+                << "last: " << std::dec << stream_word.last << std::hex << ", "
+                << "keep: " << stream_word.keep << ", "
+                << "user: " << stream_word.user << ", "
+                << std::endl;
+
+            stream.write(stream_word);
+        }
+        assert(last && "missing end of packet");
+    }
+
+    /**
+     * @brief read_tcp_from_files Fills a stream
+     * @param data_in
+     * @param session_filename
+     * @param data_filename
+     */
+
+    static void
+    read_tcp_from_files(
+        hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & data_in,
+        std::string const & session_filename,
+        std::string const & data_filename)
+    {
+        std::ifstream packet_sessions(session_filename.c_str());
+        std::ifstream packet_bytes(data_filename.c_str());
+        assert(packet_sessions && packet_bytes && "missing stimuli files" );
+
+        while (true) {
+            //enyx::oe::hwstrat::tcp_reply_payload tcp_word;
+            bool session_eof = true;
+            bool content_eof = true;
+            ap_uint<8> session;
+            ap_uint<8> tcp_error;
+
+            std::string content;
+
+            std::string session_line;
+            for (std::string session_line; std::getline(packet_sessions, session_line); ) { 
+                if (!session_line.empty() && session_line[0] != '#') {
+                    std::istringstream ss(session_line);
+                    session =  enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+                    tcp_error = enyx::get_from_hex_stream_as< ap_uint<8> >(ss);
+                    std::cout << "[TB] " << std::dec
+                        << "session: " << session << ", "
+                        << "tcp_error: " << tcp_error << ", "
+                        << std::endl;
+
+                    session_eof = false;
+                    break;
+                }
+                session_eof = true;
+            }
+            //assert(false);
+            std::string content_bytes;
+            for (std::string content_bytes; std::getline(packet_bytes, content_bytes); ) { 
+                if (!content_bytes.empty() && content_bytes[0] != '#') {
+                    content = std::string(content_bytes);
+                    content_eof = false;
+                    break;
+                }
+                content_eof = true;
+            }
+
+            if (content_eof)
+                break;
+
+            std::cout << "~~~~ content bytes: " << content << std::endl;
+            fill_tcp_stream(data_in, session, content, tcp_error);
+        }
+    }
+
+    /// Reads words of DMA from file
+    static void
+    read_data_in_from_file(hls::stream<enyx::oe::hwstrat::tcp_reply_payload> & data_in, std::string const& file)
+    {
+        std::ifstream data_in_file(file.c_str());
+        assert(data_in_file);
+        for (std::string l; std::getline(data_in_file, l); )
+            if (! l.empty() && l[0] != '#')
+                enyx::fill_stream_with_text(data_in, l);
+    }
 
     static void
     convert_string_to_cpu2fpgaheader(enyx::oe::hwstrat::cpu2fpga_header & out,  std::istringstream& in)

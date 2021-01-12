@@ -121,6 +121,8 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
    #pragma HLS STREAM variable=tick2trade_to_notifs depth=4
    static hls::stream<algo::user_dma_tick2cancel_notification> tick2cancel_to_notifs;
    #pragma HLS STREAM variable=tick2cancel_to_notifs depth=4
+   static hls::stream<algo::user_dma_tcp_consumer_notification> tcp_to_notifs;
+   #pragma HLS STREAM variable=tcp_to_notifs depth=4
 
 
    /// Tick to Cancel Algorithm
@@ -165,10 +167,14 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
      // Handle notifications from workers to DMA 
      algo::Notifications::p_broadcast_notifications(tick2cancel_to_notifs, 
                                                    tick2trade_to_notifs, 
-                                                   config_to_notifs, 
+                                                   config_to_notifs,
+                                                   tcp_to_notifs,
                                                    user_dma_channel_data_out);
 
 
      // Consumes TCP input data, and trigger
-     enyx::oe::nxaccess_hw_algo::TcpConsumer::p_consume_tcp(tcp_replies_in, decisions_ouputs[strategy_count]);
+     enyx::oe::nxaccess_hw_algo::TcpConsumer::p_consume_tcp(
+        tcp_replies_in,
+        tcp_to_notifs,
+        decisions_ouputs[strategy_count]);
 }

@@ -12,6 +12,7 @@
 
 PROJECT=project_nxaccess_hls
 VIVADO_CMD=vivado_hls
+PY_DIR=./../scripts/rebuild_firmware
 
 create_project:
 	echo "Will prepare Vivado HLS project ! "
@@ -30,11 +31,21 @@ cosim:
 	$(VIVADO_CMD) cosim.tcl
 
 open_gui:
-	$(VIVADO_CMD) -p project_nxaccess_hls
+	$(VIVADO_CMD) -p $(PROJECT)
 
-firmware:
-	$(VIVADO_CMD) csynth.tcl
-	./build_fpga.py --rtl-language vhdl
+$(PY_DIR)/venv:
+	$(PY_DIR)/install
+
+firmware: load_configuration build_firmware
+
+load_configuration: $(PY_DIR)/venv
+	$(PY_DIR)/load_configuration -v \
+		./../../devFramework
+
+build_firmware: $(PY_DIR)/venv
+	$(PY_DIR)/build_firmware -v \
+		./../../devFramework
+
 clean:
 	echo "This will clean the vivado project files (not the source code)"
 	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
