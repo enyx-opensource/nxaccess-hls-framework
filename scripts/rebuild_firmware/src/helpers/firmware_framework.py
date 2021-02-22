@@ -95,7 +95,7 @@ class FirmwareFramework:
             logging.warning('Dry run mode')
 
         self.path = FirmwareFramework.get_framework_root(path=path)
-        self.sandbox_path = os.path.join(self.path,"rtl/sandbox/enyx_oe_hwstrat_hls_demo/src")
+        self.sandbox_path = os.path.join(self.path,"rtl/sandbox/algorithm_entrypoint/src")
         self.topName = self.get_topName()
         logging.info(f'New FirmwareFramework with path {self.path} and '
                      f'sandbox in {self.sandbox_path} '
