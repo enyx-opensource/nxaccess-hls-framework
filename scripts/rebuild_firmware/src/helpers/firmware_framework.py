@@ -76,11 +76,11 @@ class FirmwareFramework:
     CREATE_PROJECT = '-pec'
     TOP_NAME_LOCATION = 'rtl/tops'
     DEVFRAMEWORK_CONFIG_FILE = 'scripts/devframework.yaml'
-    SUPPORTED_LICENSE_VERSIONS = [1,2]
+    SUPPORTED_LICENSE_VERSIONS = [1,2,3]
     CORE_LICENSES = [
         'ENYX_IP_LICENSE_HFP',
-        'ENYX_IP_LICENSE_TCP',
-        'ENYX_IP_LICENSE_UDP',
+        'ENYX_IP_LICENSE_TCP_DE',
+        'ENYX_IP_LICENSE_UDP_DE',
         'ENYX_IP_LICENSE_PCS',]
 
     def __init__(self, path, dry_run=False) -> None:
