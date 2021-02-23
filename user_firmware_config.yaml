@@ -8,10 +8,10 @@ Application configuration: !!omap
 #---------------------------------------------
 
 # Max number of supported market data multicast stream
-- MARKET_STREAM_COUNT_MAX: 8
+# - MARKET_STREAM_COUNT_MAX: 8
 
 # Max number of instruments (in thousands)
-- MARKET_INSTR_HT_K_INSTR_COUNT_MAX: 2
+# - MARKET_INSTR_HT_K_INSTR_COUNT_MAX: 2
 
 # Upper limit for the HLS module frequency, the effective frequency depends on internal clock configuration
 - MAX_SANDBOX_CLOCK_MHZ: 250
