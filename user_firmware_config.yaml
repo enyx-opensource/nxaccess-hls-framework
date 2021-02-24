@@ -18,7 +18,7 @@ Application configuration: !!omap
 - TCP_FILL_TO_SANDBOX_PIPE_COUNT: 0
 - SANDBOX_TO_MSU_TOP_PIPE_COUNT: 0
 - FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 0
-- STRATEGY_CLK_NAME: "CUSTOM_CLK_1"
+- STRATEGY_CLK_NAME: "PCIE_USER_CLK"
 
 
 # HLS Trigger Arguments Conversion (one per OUE hw filling FIFO)
