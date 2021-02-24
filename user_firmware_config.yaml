@@ -14,11 +14,11 @@ Application configuration: !!omap
 # - MARKET_INSTR_HT_K_INSTR_COUNT_MAX: 2
 
 # Upper limit for the HLS module frequency, the effective frequency depends on internal clock configuration
-- MAX_SANDBOX_CLOCK_MHZ: 250
 - SANDBOX_APPLICATION_NAME: enyx_oe_hwstrat_hls_demo
 - TCP_FILL_TO_SANDBOX_PIPE_COUNT: 0
 - SANDBOX_TO_MSU_TOP_PIPE_COUNT: 0
 - FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 0
+- STRATEGY_CLK_NAME: "CUSTOM_CLK_1"
 
 
 # HLS Trigger Arguments Conversion (one per OUE hw filling FIFO)
