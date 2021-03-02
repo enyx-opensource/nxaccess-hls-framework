@@ -41,6 +41,7 @@ firmware: load_configuration build_firmware
 load_configuration: $(PY_DIR)/venv
 	$(PY_DIR)/load_configuration -v \
 		./../../devFramework \
+		--license-file ./../firmware_license.json \
 		--user-config-file ./../user_firmware_config.yaml
 
 build_firmware: $(PY_DIR)/venv
