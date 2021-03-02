@@ -48,7 +48,7 @@ $ tar zxvf top_xxx_delivery.tar.gz
 $ make build_firmware
 ```
 
-This command, through the makefile ``firmware`` target, invokes a Python script located in *scripts/rebuild_firmware* which updates the firmware project licensing and configuration settings according to the contents of the *firmware_license.json* and *user_firmware_config.yaml* files.
+This command, through the makefile ``build_firmware`` target, invokes a Python script located in *scripts/rebuild_firmware* which updates the firmware project licensing and configuration settings according to the contents of the *firmware_license.json* and *user_firmware_config.yaml* files.
 
 ## Checking Timing Closure
 
