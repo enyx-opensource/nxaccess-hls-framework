@@ -241,26 +241,28 @@ class FirmwareFramework:
         # Check if file exists
         if not filename:
             logger.info('no license file specified, skipping license update')
-            return None
-        logger.info('updating license information')
+        elif not os.path.isfile(filename):
+            logger.warning('License file not found, generated firmware will not contain it')
+        else:
+            logger.info('updating license information')
 
-        # Load and check license data
-        license_data = json.load(open(filename))['enyx_firmware_license']
-        if license_data['version'] not in \
-                FirmwareFramework.SUPPORTED_LICENSE_VERSIONS:
-            raise ValueError('Unsupported license file version')
+            # Load and check license data
+            license_data = json.load(open(filename))['enyx_firmware_license']
+            if license_data['version'] not in \
+                    FirmwareFramework.SUPPORTED_LICENSE_VERSIONS:
+                raise ValueError('Unsupported license file version')
 
-        # Compare against already existing licensing data
-        app_cfg = self.firmware_config['Application configuration']
-        if any(core_license in app_cfg
-               for core_license in FirmwareFramework.CORE_LICENSES):
-            logger.warning('License data already present, updating with new values')
+            # Compare against already existing licensing data
+            app_cfg = self.firmware_config['Application configuration']
+            if any(core_license in app_cfg
+                   for core_license in FirmwareFramework.CORE_LICENSES):
+                logger.warning('License data already present, updating with new values')
 
-        # update licenses
-        for core_name, core_license in license_data['cores'].items():
-            core_license_name = core_name.upper()
-            app_cfg[core_license_name] = core_license
-            logger.debug(f'updated license {core_license_name}')
+            # update licenses
+            for core_name, core_license in license_data['cores'].items():
+                core_license_name = core_name.upper()
+                app_cfg[core_license_name] = core_license
+                logger.debug(f'updated license {core_license_name}')
 
         return None
 
