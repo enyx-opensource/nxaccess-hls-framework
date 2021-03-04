@@ -11,7 +11,7 @@ For more information about the nxAccess solution please refer to our website: ww
 
 ## Requirements
 
-* Vivado 2018.3 tool suite
+* Vivado 2019.2 tool suite
 * GCC & G++
 
 ## Steps
