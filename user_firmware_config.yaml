@@ -62,9 +62,3 @@ Application configuration: !!omap
 
 # Depth of the TCP retry buffer in MTUs for each individual TCP session
 - TCP_RETRY_BUFFER_MTU_QTY: 12
-
-- OUE_CONTENT_FIFO_256_COUNT: 35
-- OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 3
-- OUE_CONTENT_PUF_COUNT: 32
-- OUE_FIX_CHECKSUM_UNITS: 1
-- PAYLOAD_MERGE_CAPABILITY: "false"
