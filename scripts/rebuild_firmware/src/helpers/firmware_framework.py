@@ -73,7 +73,7 @@ class FirmwareFramework:
     MAIN_SCRIPT = 'generate_firmware'
     PRINT_VERSION = '--version'
     ARG_DEVFRAMEWORK = 'devframework.yaml'
-    CREATE_PROJECT = '-pec'
+    CREATE_PROJECT = '-pc'
     TOP_NAME_LOCATION = 'rtl/tops'
     DEVFRAMEWORK_CONFIG_FILE = 'scripts/devframework.yaml'
     SUPPORTED_LICENSE_VERSIONS = [1,2,3]
