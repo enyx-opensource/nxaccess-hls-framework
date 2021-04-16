@@ -1,59 +1,61 @@
-# Description
+# nxAccess HLS Framework
 
-This package contains a demonstration application of the nxAccess HLS Framework.
+This repository contains the **[nxAccess][e-nxaccess] HLS Framework** source code.
 
-This framework based on our nxAccess market access solution allows software engineers 
-to develop advanced algorithms to run directly on an FPGA.
+Using this framework, software engineers are able to implement advanced trading strategies on Enyx's FPGA board, taking full-advantage of hardware acceleration with direct market access.
 
-For more information about the nxAccess solution please refer to our website: www.enyx.com/nxAccess
+Please visit [enyx.com/nxaccess][e-nxaccess] for more information.
 
-# Build
+## Quick Start
 
-## Requirements
+### Building the HLS project
 
-* Vivado 2018.3 tool suite
-* GCC & G++
-
-## Steps
-
-* cd hw
-* make create_project
-* make csim
-* make csynth
-* make cosim
-
-# Updating the Firmware Project
-
-## Extracting Firmware Archive Files
-
-The firmware update script requires firmware project files to be present in a directory named `devFramework`, present in the parent directory containing the `nxaccess-hls-framework` git repository.
-
-```
-- nxaccess-hls-framework/
-	- hw/
-	- scripts/
-	- sw/
-	- (...)
-- top_xxx_delivery.tar.gz
-- **devFramework/**
+```shell
+cd nxaccess-hls-framework/hw
+make create_project
+make csim
+make csynth
+make cosim
 ```
 
-```bash
-$ tar zxvf top_xxx_delivery.tar.gz
+> 📝 **Note**:
+> 
+> Please refer to the [`hw/README.md`](hw/README.md) document for software requirements; build process details as well as as troubleshooting.
+
+### Generating a FPGA Firmware File
+
+FPGA-based hardware accelerators must be configured using a FPGA bitstream file.
+
+```shell
+cd nxaccess-hls-framework/hw
+make build_firmware
 ```
 
-## Launching the Build Process
+> ❕ **Important**:
+> 
+> This step requires an **Enyx FPGA devFramework** project. Please contact us at [enyx.com/contact][e-contact] for further information.
 
-```bash
-$ make build_firmware
+### Flashing the Firmware File on the FPGA board
+
+Please refer to the *[Upgrade the FPGA with the latest firmware][um-fw-upgrade]* section in the nxAccess user manual.
+
+### Building the Software
+
+Once [you installed][um-install-sdk] the nxAccess packages, you can follow the standard CMake-based flow : 
+
+```shell
+$ mkdir build 
+$ cd build 
+$ cmake .. 
+$ make 
 ```
 
-This command, through the makefile ``build_firmware`` target, invokes a Python script located in *scripts/rebuild_firmware* which updates the firmware project licensing and configuration settings according to the contents of the *firmware_license.json* and *user_firmware_config.yaml* files.
+You end up with packages that can be installed, and the following binaries:
 
-## Checking Timing Closure
+ * `enyx-oe-hwstrat-hls-demo` that is a demonstration of the hls core configuration.
 
-Timing results are displayed using the following command, which extracts values from the post-route physical optimization report file.
-
-```bash
-$ make show_timing_info
-```
+[w-hdl]: https://en.wikipedia.org/wiki/Hardware_description_language
+[e-nxaccess]: https://www.enyx.com/nxaccess/
+[e-contact]: https://www.enyx.com/contact/
+[um-fw-upgrade]: https://www.enyx.com/documentation/nxaccess/guides/nxaccess-user-manual/index.html#upgrade-the-fpga-with-the-latest-firmware
+[um-install-sdk]: https://www.enyx.com/documentation/nxaccess/guides/nxaccess-user-manual/index.html#install-the-software-api-sdk
