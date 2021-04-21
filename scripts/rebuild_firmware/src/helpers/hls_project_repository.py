@@ -51,22 +51,22 @@ class HlsProjectRepository:
             raise ValueError(f'Unsupported language: {language}')
 
         # Locate the implementation directory
-
-        implementation_dir = None
-        for (root, dirs, _) in os.walk(self.path):
-            if HlsProjectRepository.HDL_PARENT_DIRECTORY in dirs:
-                implementation_dir = (
-                        Path(root) / HlsProjectRepository.HDL_PARENT_DIRECTORY)
-        if not implementation_dir:
-            logger.warning('No implementation directory found')
-            return list()
-        logger.debug(f'Located implementation directory: {implementation_dir}')
+        file_path = os.path.realpath(__file__)
+        repo = git.Repo(path=file_path, search_parent_directories=True)
+        git_root = repo.git.rev_parse("--show-toplevel")
+        implementation_dir = os.path.join(git_root,"hw/project_nxaccess_hls/solution_xcvu9p_3e_nxAccess/impl")
 
         # List HDL files in the relevant language directory
+        hdl_dir = os.path.join(implementation_dir,language)
+        logger.debug("Located implementation directory: {}".format(hdl_dir))
 
-        hdl_dir = implementation_dir / language
-        (_, _, files) = next(os.walk(hdl_dir))
-        files = [hdl_dir / file for file in files]
+        try:
+            (_, _, files) = next(os.walk(hdl_dir))
+        except StopIteration:
+            logger.exception("No file found in folder {}".format(hdl_dir))
+            raise
+
+        files = [os.path.join(hdl_dir,file) for file in files]
         logger.debug(f'Listed {len(files)} in {hdl_dir}')
 
         return files
