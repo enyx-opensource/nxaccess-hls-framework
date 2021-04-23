@@ -4,6 +4,7 @@
 //--! Organization:          Enyx
 //--! Project Identifier:    010 - Enyx nxAccess HLS Framework
 //--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
+//--! Contributors:          Herve R@xilinx (flap_popcount)
 //--!
 //--! © Copyright            Enyx 2019
 //--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
@@ -34,15 +35,42 @@ fill_header(user_dma_tcp_consumer_notification& notification) {
     notification.header.length = 16 * 1;
 }
 
+
+ap_uint<3> bc6(ap_uint<6> x) { // bit count in 6 bit input variable
+    ap_uint<3> v;
+    switch (x) {
+        case  0: v=0; case  1: v=1; case  2: v=1; case  3: v=2;
+        case  4: v=1; case  5: v=2; case  6: v=2; case  7: v=3;
+        case  8: v=1; case  9: v=2; case 10: v=2; case 11: v=3;
+        case 12: v=2; case 13: v=3; case 14: v=3; case 15: v=4;
+        case 16: v=1; case 17: v=2; case 18: v=2; case 19: v=3;
+        case 20: v=2; case 21: v=3; case 22: v=3; case 23: v=4;
+        case 24: v=2; case 25: v=3; case 26: v=3; case 27: v=4;
+        case 28: v=3; case 29: v=4; case 30: v=4; case 31: v=5;
+        case 32: v=1; case 33: v=2; case 34: v=2; case 35: v=3;
+        case 36: v=2; case 37: v=3; case 38: v=3; case 39: v=4;
+        case 40: v=2; case 41: v=3; case 42: v=3; case 43: v=4;
+        case 44: v=3; case 45: v=4; case 46: v=4; case 47: v=5;
+        case 48: v=2; case 49: v=3; case 50: v=3; case 51: v=4;
+        case 52: v=3; case 53: v=4; case 54: v=4; case 55: v=5;
+        case 56: v=3; case 57: v=4; case 58: v=4; case 59: v=5;
+        case 60: v=4; case 61: v=5; case 62: v=5; case 63: v=6;
+    }
+    return v;
+}
+
+ap_uint<6> flat_popcount(ap_uint<32> x) {
+    return bc6( x(31,30) )
+         + bc6( x(29,24) )
+         + bc6( x(23,18) )
+         + bc6( x(17,12) )
+         + bc6( x(11, 6) )
+         + bc6( x( 5, 0) );
+}
+
 uint32_t
 bitCount (uint32_t value) {
-    uint32_t count = 0;
-    while (value > 0) {
-        if ((value & 1) == 1)
-            count++;
-        value >>= 1;
-    }
-    return count;
+   return flat_popcount(value);
 }
 
 void
@@ -55,6 +83,9 @@ TcpConsumer::p_consume_tcp(
     static ap_uint<8> session;
 
     bool tcp_reply_word_available;
+#ifndef __SYNTHESIS__
+    std::cout << "tcp_replies_in.size() : " << tcp_replies_in.size() << '\n';
+#endif
     tcp_reply_word_available = !tcp_replies_in.empty();
 
     if (! tcp_reply_word_available)
