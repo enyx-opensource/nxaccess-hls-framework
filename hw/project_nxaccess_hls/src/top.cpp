@@ -89,9 +89,9 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
 
    // Mux/arbitrate the order trigger commands from the various Algorithms
    struct decisions_to_trigger {};
-   typedef enyx::hls_tools::arbiter<decisions_to_trigger, strategy_count+1, nxoe::trigger_command_axi>  decisions_to_trigger_arbiter_type; // create arbiter type
+   typedef enyx::hls_tools::arbiter<decisions_to_trigger, strategy_count+2, nxoe::trigger_command_axi>  decisions_to_trigger_arbiter_type; // create arbiter type
 
-   static hls::stream<nxoe::trigger_command_axi> decisions_ouputs[strategy_count+1]; // duplicated outputs, consumed by decision blocks
+   static hls::stream<nxoe::trigger_command_axi> decisions_ouputs[strategy_count+2]; // duplicated outputs, consumed by decision blocks
 #pragma HLS STREAM variable=decisions_ouputs depth=1
 
    decisions_to_trigger_arbiter_type::p_arbitrate(decisions_ouputs, trigger_bus_out);
@@ -109,7 +109,7 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
 
    // User notification DMA channel : need to arbitrate between configuration module and strategies
    struct dma_notifications{};
-   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +1, enyx::hfp::dma_user_channel_data_out>  dma_notification_arbiter_type;
+   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +2, enyx::hfp::dma_user_channel_data_out>  dma_notification_arbiter_type;
    // static hls::stream<dma_user_channel_data_out> notifications_to_cpu[strategy_count+1]; /// transports algo notification to the DMA
    // #pragma HLS STREAM variable=notifications_to_cpu depth=1
    // dma_notification_arbiter_type::p_arbitrate(notifications_to_cpu, user_dma_channel_data_out);
@@ -162,7 +162,8 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
     algo::InstrumentConfiguration::p_handle_instrument_configuration(user_dma_channel_data_in,
                                                                        instrument_read_bus,
                                                                        instrument_read_responses,
-                                                                       config_to_notifs); 
+                                                                       config_to_notifs,
+                                                                       decisions_ouputs[strategy_count+1]); 
 
      // Handle notifications from workers to DMA 
      algo::Notifications::p_broadcast_notifications(tick2cancel_to_notifs, 

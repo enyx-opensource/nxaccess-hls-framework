@@ -20,20 +20,19 @@ Application configuration: !!omap
 - FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 2
 - STRATEGY_CLK_NAME: "PCIE_USER_CLK"
 
-
 # HLS Trigger Arguments Conversion (one per OUE hw filling FIFO)
 # HLS_ARGx_CONV_TYPE: one of the following: "bypass"; "shift"; "bin_to_ascii"
 # HLS_ARGx_CONV_INPUT_WIDTH: (relevant only for "shift" or "bin_to_ascii") binary input width in bits
 # HLS_ARGx_CONV_OUTPUT_WIDTH: (relevant only for "bin_to_ascii") ASCII output width in bits
 
-# argument #0: 64-bit aligned on MSB (63:0 input forwarded on 127:64 output)
-- HLS_ARG0_CONV_TYPE: "shift"
-- HLS_ARG0_CONV_INPUT_WIDTH: 64
+# argument #0: 128-bit passthrough
+- HLS_ARG0_CONV_TYPE: "bypass"
+- HLS_ARG0_CONV_INPUT_WIDTH: -1
 - HLS_ARG0_CONV_OUTPUT_WIDTH: -1
 
-# argument #1: 64-bit aligned on MSB (63:0 input forwarded on 127:64 output)
-- HLS_ARG1_CONV_TYPE: "shift"
-- HLS_ARG1_CONV_INPUT_WIDTH: 64
+# argument #1: 128-bit passthrough
+- HLS_ARG1_CONV_TYPE: "bypass"
+- HLS_ARG1_CONV_INPUT_WIDTH: -1
 - HLS_ARG1_CONV_OUTPUT_WIDTH: -1
 
 # argument #2: 128-bit passthrough
@@ -62,3 +61,10 @@ Application configuration: !!omap
 
 # Depth of the TCP retry buffer in MTUs for each individual TCP session
 - TCP_RETRY_BUFFER_MTU_QTY: 12
+
+- OUE_CONTENT_FIFO_256_COUNT: 6
+- OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 5
+- OUE_CONTENT_PUF_COUNT: 6
+- OUE_SEQNUM_DATA_SOURCE_QTY: 32
+- OUE_FIX_CHECKSUM_UNITS: 1
+- PAYLOAD_MERGE_CAPABILITY: "false"

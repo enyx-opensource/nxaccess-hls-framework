@@ -73,14 +73,17 @@ class InstrumentConfiguration
     p_handle_instrument_configuration(hls::stream<enyx::hfp::dma_user_channel_data_in> & conf_in,
                                                hls::stream<read_instrument_data_request> (& req_in)[2],
                                                hls::stream<instrument_configuration_data_item> (& req_out)[2],
-                                               hls::stream<user_dma_update_instrument_configuration_ack> & conf_out);
+                                               hls::stream<user_dma_update_instrument_configuration_ack> & conf_out,
+                                               hls::stream<enyx::oe::hwstrat::trigger_command_axi> &output);
 
 
     static void write_word(const user_dma_update_instrument_configuration& in, enyx::hfp::dma_user_channel_data_out& word,  int word_index);
     static void write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::dma_user_channel_data_out& word, int word_index);
-    
+    static void write_word(const user_dma_software_trigger_message& in, enyx::hfp::dma_user_channel_data_out& out_word, int word_index);
+
     static void read_word(user_dma_update_instrument_configuration& ret, const enyx::hfp::dma_user_channel_data_in& word, int word_index);
     static void read_word(user_dma_update_instrument_configuration_ack& ret, const enyx::hfp::dma_user_channel_data_in& word,  int word_index);
+    static void read_word(user_dma_software_trigger_message& ret, const enyx::hfp::dma_user_channel_data_in& word,  int word_index);
 
 
 };
