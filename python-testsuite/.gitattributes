@@ -1,0 +1,4 @@
+.gitattributes export-ignore
+make_pkg2.sh export-ignore
+Makefile export-ignore
+extract_version_from_news_file.sh export-ignore
