@@ -55,6 +55,7 @@ link_directories(${EnyxLibs_LIBRARY_DIRS})
 
 # Build everything in subdirs.
 add_subdirectory(lib)
+add_subdirectory(python-binding)
 add_subdirectory(demo)
 
 # Fake check directory
