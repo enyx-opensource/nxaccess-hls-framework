@@ -19,8 +19,12 @@
 #define _BSD_SOURCE
 #include <endian.h>
 
-#include <enyx/oe/hwstrat/demo/Handler.hpp>
 #include <enyx/oe/hwstrat/demo/ErrorCode.hpp>
+#include <enyx/oe/hwstrat/demo/Helper.hpp>
+#include <enyx/oe/hwstrat/demo/Handler.hpp>
+#include <enyx/oe/hwstrat/demo/StandAloneTrigger.hpp>
+
+
 
 namespace enyx {
 namespace oe {
@@ -51,20 +55,19 @@ const char * HfpChannelUsage = "user0";
 
 template<typename Setting>
 std::error_code
-sendToFpga(enyx::hfp::tx & tx,
-           Setting const& setting)
-{
-    int failure;
-
+sendToFpga(enyx::hw::c2a_stream & stream,
+           Setting const& setting) {
     // This log can potentially impact performance, so please remove it for production use.
     LOG_ME(NX_INFO, "[%s] Raw content of message to be sent: %s",
          LogPrefix, get_hex_string(setting).c_str());
 
     //TODO: stop condition
-    while ((failure = tx.send(&setting, sizeof(setting))) && errno == EAGAIN)
-        continue;
+    std::error_code error;
+    do {
+        error = stream.send(&setting, sizeof(setting)).error();
+    } while (error == std::errc::resource_unavailable_try_again);
 
-    return enyx::hfp::err_to_error_code(failure);
+    return error;
 }
 
 const uint8_t APPLICATION_VERSION = 1;
@@ -128,9 +131,10 @@ struct AlgorithmDriver::Impl {
     }
 
     const uint16_t boardId_;
+    enyx::hw::accelerator accelerator_{find_accelerator(boardId_)};
+    enyx::hw::c2a_stream c2aStream_{find_c2a_stream(accelerator_, HfpChannelUsage)};
     enyx::hfp::mm mm_{boardId_, MMDeviceId};
     enyx::hfp::rx rx_{boardId_, HfpChannelUsage};
-    enyx::hfp::tx tx_{boardId_, HfpChannelUsage};
     enyx::hfp::rx::poller<std::reference_wrapper<Impl>> rxPoller_{rx_.get_poller(std::ref(*this))};
     Handler & handler_;
 };
@@ -164,7 +168,18 @@ AlgorithmDriver::sendConfiguration(const InstrumentConfiguration & conf) {
     //body
     update.configuration = conf;
 
-    return sendToFpga(impl_->tx_, update);
+    return sendToFpga(impl_->c2aStream_, update);
+}
+
+std::error_code
+AlgorithmDriver::trigger(uint16_t collection_id,
+                         const utils::BufferView<const uint8_t>& arg0,
+                         const utils::BufferView<const uint8_t>& arg1,
+                         const utils::BufferView<const uint8_t>& arg2,
+                         const utils::BufferView<const uint8_t>& arg3,
+                         const utils::BufferView<const uint8_t>& arg4) {
+    assert(impl_);
+    return StandAloneTrigger::trigger_helper(impl_->c2aStream_, collection_id, arg0, arg1, arg2, arg3, arg4);
 }
 
 } // namespace demo
