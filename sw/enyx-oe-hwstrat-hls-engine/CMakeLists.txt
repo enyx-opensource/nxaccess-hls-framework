@@ -34,11 +34,11 @@ find_package(Threads REQUIRED QUIET)
 find_package(Rt QUIET)
 find_package(PkgConfig REQUIRED)
 find_package(enyx-hfp 2.0.0 REQUIRED)
+find_package(enyx-hw 5.5.0 REQUIRED)
 
 # you need to have both libhfp and libenyxutils installed on your system
 pkg_check_modules(EnyxLibs REQUIRED
     enyxutils>=7.2.7)
-
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=format -Wnon-virtual-dtor -Woverloaded-virtual -Wunused -Wshadow")

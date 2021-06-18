@@ -4,8 +4,10 @@
  */
 #pragma once
 
-#include <iosfwd>
+#include <array>
 #include <cstdint>
+#include <iosfwd>
+
 #include <enyx/utils/compiler-dependencies.hpp>
 
 namespace enyx {
@@ -71,6 +73,40 @@ struct ENYX_PACKED_STRUCT InstrumentConfigurationMessage {
     char pad2[5]; //ensure aligned on 128bits words
 };
 static_assert(sizeof(InstrumentConfigurationMessage) == 48, "Invalid InstrumentConfigurationMessage size");
+
+/**
+ * @brief Software trigger specific header.
+ */
+struct ENYX_PACKED_STRUCT TriggerWithArgsHeader {
+    uint16_t               collectionId; /// Collection Id
+    uint8_t                argBitmap;    /// The arguments that will be present in this trigger request. To be mapped directly on the arg_valid bus.
+    std::array<uint8_t, 5> reserved;      /// Padding
+};
+static_assert(sizeof(TriggerWithArgsHeader) == 8, "Invalid TriggerWithArgsHeader size");
+
+/**
+ * @brief  Arguments of the collection to trigger.
+ */
+struct ENYX_PACKED_STRUCT TriggerArgs {
+    std::array<uint8_t, 16> arg0;  /// First argument  - Mandatory
+    std::array<uint8_t, 16> arg1;  /// Second argument - Optional
+    std::array<uint8_t, 16> arg2;  /// Third argument  - Optional
+    std::array<uint8_t, 16> arg3;  /// Forth argument  - Optional
+    std::array<uint8_t, 16> arg4;  /// Fifth argument  - Optional
+};
+static_assert(sizeof(TriggerArgs) == 80, "Invalid TriggerWithArgsuint size");
+
+/**
+ * @brief Message to send to trigger a collection with args.
+ *        The size of the message will vary depending on the arg_bitmap.
+ */
+struct ENYX_PACKED_STRUCT TriggerWithArgsMessage {
+    CpuToFpgaHeader       header;
+    TriggerWithArgsHeader trigger;
+    TriggerArgs           args;
+};
+static_assert(sizeof(TriggerWithArgsMessage) == 96, "Invalid TriggerWithArgsMessage size");
+
 
 struct ENYX_PACKED_STRUCT InstrumentConfigurationAckMessage {
     //16B

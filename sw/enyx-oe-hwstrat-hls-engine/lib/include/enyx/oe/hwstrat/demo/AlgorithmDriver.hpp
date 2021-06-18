@@ -1,6 +1,6 @@
 /** @file
  *  @brief Contains AlgorithmDriver.
- *  @date 2019
+ *  @date 2021
  */
 
 #pragma once
@@ -10,6 +10,8 @@
 #include <system_error>
 #include <vector>
 
+#include <enyx/utils/BufferView.hpp>
+
 #include <enyx/oe/hwstrat/demo/Protocol.hpp>
 
 namespace enyx {
@@ -17,7 +19,7 @@ namespace oe {
 namespace hwstrat {
 namespace demo {
 
-struct Handler;
+class Handler;
 
 /**
  *  @brief This class allows user to communication with the HLS algorithm.
@@ -67,6 +69,27 @@ public:
      */
     std::error_code
     sendConfiguration(const InstrumentConfiguration & update);
+
+
+    /**
+     * @brief Trigger an collection using the sandbox with some arguments.
+     *        Depending on the number of argument, the message sent will have a different size.
+     *
+     * @param collection_id Id of the collection to trigger
+     * @param arg0 First argument of the trigger. Should be a valid buffer with a size between 1 and 16.
+     * @param arg1 Second argument of the trigger. Should be a buffer with a size between 1 and 16 or an empty buffer
+     * @param arg2 Third argument of the trigger. Should be a buffer with a size between 1 and 16 or an empty buffer
+     * @param arg3 Forth argument of the trigger. Should be a buffer with a size between 1 and 16 or an empty buffer
+     * @param arg4 Fifth argument of the trigger. Should be a buffer with a size between 1 and 16 or an empty buffer.
+     * @return std::error_code An error code.  User shall retry when error code is [ std::errc::resource_unavailable_try_again ].
+     */
+    std::error_code
+    trigger(uint16_t collection_id,
+            const utils::BufferView<const uint8_t>& arg0,
+            const utils::BufferView<const uint8_t>& arg1 = {},
+            const utils::BufferView<const uint8_t>& arg2 = {},
+            const utils::BufferView<const uint8_t>& arg3 = {},
+            const utils::BufferView<const uint8_t>& arg4 = {});
 
 private:
     struct Impl;
