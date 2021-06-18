@@ -109,6 +109,110 @@ InstrumentConfiguration::read_word(user_dma_update_instrument_configuration& ret
 }
 
 
+/// Converts data words from User DMA to software message structure
+void
+InstrumentConfiguration::write_word(const user_dma_software_trigger_message& in, enyx::hfp::dma_user_channel_data_out& out_word, int word_index) {
+    #pragma HLS function_instantiate variable=word_index
+    switch(word_index) {
+    case 1: {
+        out_word.data(127, 64) =  enyx::oe::hwstrat::get_word(in.header); // 64
+        out_word.data(63, 48) = in.collection_id; // 16
+        out_word.data(47, 40) = in.arg_bitmap; // 8
+        out_word.last = 0;
+        break;
+    }
+    case 2: {
+        out_word.data = 0;
+        for (unsigned i = 0; i != 16; ++i) {
+            out_word.data <<= 8;
+            out_word.data(7, 0) = in.arg0[i];
+        }
+        out_word.last = 0;
+        break;
+    }
+    case 3: {
+        out_word.data = 0;
+        for (unsigned i = 0; i != 16; ++i) {
+            out_word.data <<= 8;
+            out_word.data(7, 0) = in.arg1[i];
+        }
+        out_word.last = 0;
+        break;
+    }
+    case 4: {
+        out_word.data = 0;
+        for (unsigned i = 0; i != 16; ++i) {
+            out_word.data <<= 8;
+            out_word.data(7, 0) = in.arg2[i];
+        }
+        out_word.last = 0;
+        break;
+    }
+    case 5: {
+        out_word.data = 0;
+        for (unsigned i = 0; i != 16; ++i) {
+            out_word.data <<= 8;
+            out_word.data(7, 0) = in.arg3[i];
+        }
+        out_word.last = 0;
+        break;
+    }
+    case 6: {
+        out_word.data = 0;
+        for (unsigned i = 0; i != 16; ++i) {
+            out_word.data <<= 8;
+            out_word.data(7, 0) = in.arg4[i];
+        }
+        out_word.last = 1;
+        break;
+    }
+    default:
+        assert(false && "Handling only 6 words for user_dma_update_instrument_configuration decoding");
+    }
+}
+
+
+/// Converts data words from User DMA to software message structure
+void
+InstrumentConfiguration::read_word(user_dma_software_trigger_message& ret, const enyx::hfp::dma_user_channel_data_in& word, int word_index) {
+   #pragma HLS function_instantiate variable=word_index
+    switch(word_index) {
+    case 1: {
+        enyx::oe::hwstrat::read_word(ret.header, word.data(127,64));
+        ret.collection_id = word.data(63,48);
+        ret.arg_bitmap = word.data(47,40);
+        break;
+    }
+    case 2: {
+        for (int i = 0; i < 16; i++)
+            ret.arg0[i] = word.data(127-8*i, 120-8*i);
+        break;
+    }
+    case 3: {
+        for (int i = 0; i < 16; i++)
+            ret.arg1[i] = word.data(127-8*i, 120-8*i);
+        break;
+    }
+    case 4: {
+        for (int i = 0; i < 16; i++)
+            ret.arg2[i] = word.data(127-8*i, 120-8*i);
+        break;
+    }
+    case 5: {
+        for (int i = 0; i < 16; i++)
+            ret.arg3[i] = word.data(127-8*i, 120-8*i);
+        break;
+    }
+    case 6: {
+        for (int i = 0; i < 16; i++)
+            ret.arg4[i] = word.data(127-8*i, 120-8*i);
+        break;
+    }
+    default:
+        assert(false && "Handling only 6 words for user_dma_update_instrument_configuration decoding");
+    }
+}
+
 /// Converts configuration message ack to software message structure to data words
 void
 InstrumentConfiguration::write_word(const user_dma_update_instrument_configuration_ack& in, enyx::hfp::dma_user_channel_data_out& out_word, int word_index) {
@@ -189,7 +293,8 @@ void
 InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp::dma_user_channel_data_in> & conf_in,
                                                           hls::stream<InstrumentConfiguration::read_instrument_data_request> (& req_in)[2],
                                                           hls::stream<instrument_configuration_data_item> (& req_out)[2],
-                                                          hls::stream<user_dma_update_instrument_configuration_ack> & conf_out) {
+                                                          hls::stream<user_dma_update_instrument_configuration_ack> & conf_out,
+                                                          hls::stream<enyx::oe::hwstrat::trigger_command_axi> &output) {
 
 #pragma HLS INLINE recursive
 #pragma HLS PIPELINE enable_flush
@@ -197,11 +302,18 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
     static enum  { IDLE,  /// doing nothing
                    IGNORE_PACKET, /// ignore incoming packet
                    READ_CONF_WORD2, /// will process word 2 of DMA input
-                   READ_CONF_WORD3 /// will process word 3 of DMA input
+                   READ_CONF_WORD3, /// will process word 3 of DMA input
+                   READ_SW_TRIG_ARG1,
+                   READ_SW_TRIG_ARG2,
+                   READ_SW_TRIG_ARG3,
+                   READ_SW_TRIG_ARG4,
+                   READ_SW_TRIG_ARG5_ISSUE_TRIG
                  } current_state; /// current state in FSM
     #pragma HLS RESET variable=current_state
 
     static user_dma_update_instrument_configuration current_dma_message_read; /// DMA message being parsed message.
+    static user_dma_software_trigger_message current_software_trigger_message_read; /// DMA message being parsed message.
+
     static instrument_configuration_data_item write_data ;
     static InstrumentConfiguration::instrument_configuration_data_item values[InstrumentConfiguration::instrument_count];
 #pragma HLS RESOURCE variable=values core=XPM_MEMORY uram 
@@ -222,6 +334,16 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
                                  << int(current_dma_message_read.header.ack_request)  << "\n";
 
                        current_state = READ_CONF_WORD2; // now process second word of packet
+                   } else if((current_dma_message_read.header.dest == enyx::oe::nxaccess_hw_algo::SoftwareTrigger)
+                           && (current_dma_message_read.header.version == 1))
+                   {
+                       read_word(current_software_trigger_message_read, _read, 1);
+                       std::cout << "[CONF] Incoming software trigger message, "
+                                << "collection_id: " << std::hex << current_software_trigger_message_read.collection_id << " "
+                                << "arg_bitmap: " << std::hex << (int) current_software_trigger_message_read.arg_bitmap << " "
+                                << "\n";
+                        current_state = READ_SW_TRIG_ARG1;
+
                    } else {
                        std::cout << "[WARNING][CONF] Incoming configuration message : message unknown, ignoring ! \n" ;
                        current_state = IGNORE_PACKET;
@@ -288,6 +410,113 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
             ack.tick_to_trade_bid_price = current_dma_message_read.tick_to_trade_bid_price;
 
             conf_out.write(ack);
+
+            current_state = IDLE;
+        }
+        break;
+    }
+    case READ_SW_TRIG_ARG1: {
+        if(!conf_in.empty()) {
+            std::cout << "[CONF] processing word 2 of software trigger message (first argument)\n";
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
+            read_word(current_software_trigger_message_read, _read, 2); // convert word 2 into struct
+            std::cout << "[CONF] argument: 0x";
+            for(int i=0; i<16; ++i)
+                std::cout << std::hex << (int) current_software_trigger_message_read.arg0[i] << " ";
+            std::cout << "\n";
+            current_state = READ_SW_TRIG_ARG2;
+        }
+        break;
+    }
+    case READ_SW_TRIG_ARG2: {
+        if(!conf_in.empty()) {
+            std::cout << "[CONF] processing word 3 of software trigger message (second argument)\n";
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
+            read_word(current_software_trigger_message_read, _read, 3); // convert word 3 into struct
+            std::cout << "[CONF] argument: 0x";
+            for(int i=0; i<16; ++i)
+                std::cout << std::hex << (int) current_software_trigger_message_read.arg1[i] << " ";
+            std::cout << "\n";
+            current_state = READ_SW_TRIG_ARG3;
+        }
+        break;
+    }
+    case READ_SW_TRIG_ARG3: {
+        if(!conf_in.empty()) {
+            std::cout << "[CONF] processing word 4 of software trigger message (third argument)\n";
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
+            read_word(current_software_trigger_message_read, _read, 4); // convert word 4 into struct
+            std::cout << "[CONF] argument: 0x";
+            for(int i=0; i<16; ++i)
+                std::cout << std::hex << (int) current_software_trigger_message_read.arg2[i] << " ";
+            std::cout << "\n";
+            current_state = READ_SW_TRIG_ARG4;
+        }
+        break;
+    }
+    case READ_SW_TRIG_ARG4: {
+        if(!conf_in.empty()) {
+            std::cout << "[CONF] processing word 5 of software trigger message (fourth argument)\n";
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
+            read_word(current_software_trigger_message_read, _read, 5); // convert word 5 into struct
+            std::cout << "[CONF] argument: 0x";
+            for(int i=0; i<16; ++i)
+                std::cout << std::hex << (int) current_software_trigger_message_read.arg3[i] << " ";
+            std::cout << "\n";
+            current_state = READ_SW_TRIG_ARG5_ISSUE_TRIG;
+        }
+        break;
+    }
+    case READ_SW_TRIG_ARG5_ISSUE_TRIG: {
+        if(!conf_in.empty()) {
+            std::cout << "[CONF] processing word 6 of software trigger message (fifth argument)\n";
+            enyx::hfp::dma_user_channel_data_in _read = conf_in.read();
+            read_word(current_software_trigger_message_read, _read, 6); // convert word 2 into struct
+            std::cout << "[CONF] argument: 0x";
+            for(int i=0; i<16; ++i)
+                std::cout << std::hex << (int) current_software_trigger_message_read.arg4[i] << " ";
+            std::cout << "\n";
+            ap_uint<nxoe::trigger_meta_size::TRIGGER_SIZE_ARG0> arg0;
+            ap_uint<nxoe::trigger_meta_size::TRIGGER_SIZE_ARG0> arg1;
+            ap_uint<nxoe::trigger_meta_size::TRIGGER_SIZE_ARG0> arg2;
+            ap_uint<nxoe::trigger_meta_size::TRIGGER_SIZE_ARG0> arg3;
+            ap_uint<nxoe::trigger_meta_size::TRIGGER_SIZE_ARG0> arg4;
+
+            arg0 = 0;
+            for (unsigned i = 0; i != 16; ++i) {
+                arg0 <<= 8;
+                arg0(7, 0) = current_software_trigger_message_read.arg0[i];
+            }
+            arg1 = 0;
+            for (unsigned i = 0; i != 16; ++i) {
+                arg1 <<= 8;
+                arg1(7, 0) = current_software_trigger_message_read.arg1[i];
+            }
+            arg2 = 0;
+            for (unsigned i = 0; i != 16; ++i) {
+                arg2 <<= 8;
+                arg2(7, 0) = current_software_trigger_message_read.arg2[i];
+            }
+            arg3 = 0;
+            for (unsigned i = 0; i != 16; ++i) {
+                arg3 <<= 8;
+                arg3(7, 0) = current_software_trigger_message_read.arg3[i];
+            }
+            arg4 = 0;
+            for (unsigned i = 0; i != 16; ++i) {
+                arg4 <<= 8;
+                arg4(7, 0) = current_software_trigger_message_read.arg4[i];
+            }
+
+            nxoe::trigger_collection_internal(
+                output,
+                current_software_trigger_message_read.collection_id, // Collection to Trigger
+                current_software_trigger_message_read.arg_bitmap,
+                arg0,
+                arg1,
+                arg2,
+                arg3,
+                arg4);
 
             current_state = IDLE;
         }

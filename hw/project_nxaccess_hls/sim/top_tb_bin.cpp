@@ -377,50 +377,91 @@ private:
         std::cout << "[VERBOSE] out.length: " << std::dec << out.length << std::endl;
     }
 
-    /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::dma_user_channel_data_in)
+    /// Converts strings representing DMA inputs to 128b words (enyx::hfp::dma_user_channel_data_in)
     static void
     convert_string_to_dma_channel_in(hls::stream<enyx::hfp::dma_user_channel_data_in> & result, std::string const& content)
     {
-        // We want to read :
-//        # cpu2fpga_header   | tick_to_cancel_threshold | tick_to_trade_bid_price | tick_to_trade_ask_price |  tick_to_trade_bid_collection_id | tick_to_cancel_collection_id | tick_to_trade_ask_collection_id | instrument_id|enable
-//        # version 1, module 8, msgtype 1 , ack request = 0 , reserved = 0, timestamp 0x42, length unused yet
-//        01 08 01 00 0 42 00   00000004A817C800           0000000000000000           0000000000000000          0010                               0011                          0012                                0014         1
-
-        enyx::hfp::dma_user_channel_data_out word1;
-        enyx::hfp::dma_user_channel_data_out word2;
-        enyx::hfp::dma_user_channel_data_out word3;
-        enyx::hfp::dma_user_channel_data_in word;
-
-        enyx::hfp::dma_user_channel_data_in word_;
-        enyx::hfp::dma_user_channel_data_in word__;
-        enyx::oe::nxaccess_hw_algo::user_dma_update_instrument_configuration tmp;
-
         std::istringstream ss(content);
+        enyx::oe::hwstrat::cpu2fpga_header pkt_header;
+        convert_string_to_cpu2fpgaheader(pkt_header, ss);
 
-        // read cpu2fpga_header
-        convert_string_to_cpu2fpgaheader(tmp.header, ss);
+        if (pkt_header.dest == enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration) {
+            // We want to read :
+            //        # cpu2fpga_header   | tick_to_cancel_threshold | tick_to_trade_bid_price | tick_to_trade_ask_price |  tick_to_trade_bid_collection_id | tick_to_cancel_collection_id | tick_to_trade_ask_collection_id | instrument_id|enable
+            //        # version 1, module 8, msgtype 1 , ack request = 0 , reserved = 0, timestamp 0x42, length unused yet
+            //        01 08 01 00 0 42 00   00000004A817C800           0000000000000000           0000000000000000          0010                               0011                          0012                                0014         1
 
-        tmp.tick_to_cancel_threshold =  enyx::get_from_hex_stream_as<uint64_t>(ss);
-        tmp.tick_to_trade_bid_price =  enyx::get_from_hex_stream_as<uint64_t>(ss);
-        tmp.tick_to_trade_ask_price =  enyx::get_from_hex_stream_as<uint64_t>(ss);
-        tmp.instrument_id =  enyx::get_from_hex_stream_as<uint32_t>(ss);
-        tmp.tick_to_trade_bid_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
-        tmp.tick_to_cancel_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
-        tmp.tick_to_trade_ask_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
+            enyx::oe::nxaccess_hw_algo::user_dma_update_instrument_configuration tmp;
 
-        tmp.enabled =  enyx::get_from_hex_stream_as<uint16_t>(ss);
+            tmp.header = pkt_header;
+            tmp.tick_to_cancel_threshold =  enyx::get_from_hex_stream_as<uint64_t>(ss);
+            tmp.tick_to_trade_bid_price =  enyx::get_from_hex_stream_as<uint64_t>(ss);
+            tmp.tick_to_trade_ask_price =  enyx::get_from_hex_stream_as<uint64_t>(ss);
+            tmp.instrument_id =  enyx::get_from_hex_stream_as<uint32_t>(ss);
+            tmp.tick_to_trade_bid_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
+            tmp.tick_to_cancel_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
+            tmp.tick_to_trade_ask_collection_id =  enyx::get_from_hex_stream_as<uint16_t>(ss);
 
-        // convert input DMA message to 3 words as it would come into the FPGA
-        for(int i = 1; i <= 3; ++i) 
-        {
-            enyx::hfp::dma_user_channel_data_out word;
-            enyx::hfp::dma_user_channel_data_in out;
-            enyx::oe::nxaccess_hw_algo::InstrumentConfiguration::write_word(tmp, word, i);
-            out.data(127,0) = word.data(127,0);
-            out.last = word.last;
-            result.write(out);
+            tmp.enabled =  enyx::get_from_hex_stream_as<uint16_t>(ss);
+
+            // convert input DMA message to 3 words as it would come into the FPGA
+            for(int i = 1; i <= 3; ++i) 
+            {
+                enyx::hfp::dma_user_channel_data_out word;
+                enyx::hfp::dma_user_channel_data_in out;
+                enyx::oe::nxaccess_hw_algo::InstrumentConfiguration::write_word(tmp, word, i);
+                out.data(127,0) = word.data(127,0);
+                out.last = word.last;
+                result.write(out);
+            }
+        } else if (pkt_header.dest == enyx::oe::nxaccess_hw_algo::SoftwareTrigger) {
+            std::cout << "[#############################################] out.msg_type: " << std::endl;
+            enyx::hfp::dma_user_channel_data_in word;
+
+            enyx::oe::nxaccess_hw_algo::user_dma_software_trigger_message tmp;
+            tmp.header = pkt_header;
+            tmp.collection_id = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            tmp.arg_bitmap = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            tmp.padding_header[0] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            std::cout << "tmp.padding_header[0]: " << std::hex << tmp.padding_header[0] << std::endl;
+            tmp.padding_header[1] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            std::cout << "tmp.padding_header[1]: " << std::hex << tmp.padding_header[1] << std::endl;
+            tmp.padding_header[2] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            std::cout << "tmp.padding_header[2]: " << std::hex << tmp.padding_header[2] << std::endl;
+            tmp.padding_header[3] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            std::cout << "tmp.padding_header[3]: " << std::hex << tmp.padding_header[3] << std::endl;
+            tmp.padding_header[4] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            std::cout << "tmp.padding_header[4]: " << std::hex << tmp.padding_header[4] << std::endl;
+
+            for (int i = 0; i < 16; i++){
+                tmp.arg0[i] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            }
+            for (int i = 0; i < 16; i++){
+                tmp.arg1[i] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            }
+            for (int i = 0; i < 16; i++){
+                tmp.arg2[i] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            }
+            for (int i = 0; i < 16; i++){
+                tmp.arg3[i] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            }
+            for (int i = 0; i < 16; i++){
+                tmp.arg4[i] = enyx::get_from_hex_stream_as<uint16_t>(ss);
+            }
+
+            // convert input DMA message to 3 words as it would come into the FPGA
+            for(int i = 1; i <= 6; ++i) 
+            {
+                enyx::hfp::dma_user_channel_data_out word;
+                enyx::hfp::dma_user_channel_data_in out;
+                enyx::oe::nxaccess_hw_algo::InstrumentConfiguration::write_word(tmp, word, i);
+                out.data(127,0) = word.data(127,0);
+                out.last = word.last;
+                result.write(out);
+            }
         }
     }
+
 
     /// Converts strings representing DMA inputs (instrument configurations) to 128b words (enyx::hfp::dma_user_channel_data_in)
     static void

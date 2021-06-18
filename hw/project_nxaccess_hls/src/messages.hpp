@@ -155,6 +155,25 @@ struct user_dma_tick2trade_notification {
 # endif
 
 
+/// Software initiated trigger with arguments message
+#ifdef ENYX_NO_HLS_SUPPORT // do not use #pragma pack() with Vivado
+    #pragma pack(1)
+#endif
+struct user_dma_software_trigger_message {
+    //16B
+    struct enyx::oe::hwstrat::cpu2fpga_header header; // 8 bytes
+    uint16_t collection_id; // requested collection id
+    uint8_t arg_bitmap; // per-argument enable bits (i.e arg0 must be pushed if bit #0 is set)
+    char padding_header[5]; // padding for 16 byte boundary alignment
+    //16B
+    uint8_t arg0[16];        /// First argument
+    uint8_t arg1[16];        /// Second argument
+    uint8_t arg2[16];        /// Third argument
+    uint8_t arg3[16];        /// Forth argument
+    uint8_t arg4[16];        /// Fifth argument
+};
+
+
 // Modules Ids for this architecture
 enum fpga_modules_ids {
     Reserved0, // Reserved for enyx
