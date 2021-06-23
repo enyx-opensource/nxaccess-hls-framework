@@ -48,10 +48,11 @@ build_firmware: $(PY_DIR)/venv
 	$(PY_DIR)/build_firmware -v \
 		./../../devFramework
 
+.PHONY: clean
 clean:
-	echo "This will clean the vivado project files (not the source code)"
-	rm $(PROJECT)/{solution_xcvu9p_3e_nxAccess,.project,vivado_hls.app,.cproject,.apc,.settings} -rf
-
+	${RM} -r $(PROJECT)/solution_xcvu9p_3e_nxAccess/
+	${RM} $(PROJECT)/vivado_hls.app
+	${RM} vivado_hls.log vivado.jou
 
 view_diff_trigger:
 	vimdiff project_nxaccess_hls/sim/top_tb_0/tr*{gen,ref}*
