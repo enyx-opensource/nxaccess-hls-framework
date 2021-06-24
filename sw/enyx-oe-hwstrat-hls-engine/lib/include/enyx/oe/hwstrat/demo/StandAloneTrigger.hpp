@@ -119,7 +119,7 @@ StandAloneTrigger::trigger_helper(enyx::hw::c2a_stream& stream,
     to_send.header.msg_type= 1;
     to_send.header.length = sizeof(CpuToFpgaHeader) + sizeof(TriggerWithArgsHeader);
     // Fill Trigger
-    to_send.trigger.collectionId = collection_id;
+    to_send.trigger.collectionId = ((collection_id >> 8) &0xFF) |  ((collection_id & 0xFF) << 8) ;
     to_send.trigger.argBitmap = 1;
 
     // Fill argument
