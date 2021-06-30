@@ -281,7 +281,11 @@ class FirmwareFramework:
 
         # Load user provided firmware configuration
         contents = YAML().load(open(filename).read())
-        logger.debug(f'loaded {len(contents.keys())} section from {filename}')
+        if not contents:
+            logger.warning("YAML file {} is empty".format(filename))
+            return 0
+        else:
+            logger.debug(f'loaded {len(contents.keys())} section from {filename}')
 
         # update firmware configuration
         updates = 0
