@@ -1,0 +1,74 @@
+Application configuration: !!omap
+
+#---------------------------------------------
+#   /_\  _ __ _ __| (_)__ __ _| |_(_)___ _ _
+#  / _ \| '_ \ '_ \ | / _/ _` |  _| / _ \ ' \
+# /_/ \_\ .__/ .__/_|_\__\__,_|\__|_\___/_||_|
+#       |_|  |_|
+#---------------------------------------------
+
+# Max number of supported market data multicast stream
+- MARKET_STREAM_COUNT_MAX: 4
+
+# Max number of instruments (in thousands)
+- MARKET_INSTR_HT_K_INSTR_COUNT_MAX: 1
+
+# Upper limit for the HLS module frequency, the effective frequency depends on internal clock configuration
+- SANDBOX_APPLICATION_NAME: enyx_oe_hwstrat_hls_demo
+- TCP_FILL_TO_SANDBOX_PIPE_COUNT: 2
+- SANDBOX_TO_MSU_TOP_PIPE_COUNT: 2
+- FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 2
+
+- UDP_CLK_NAME: "CUSTOM_CLK_1"
+- ENGINE_CLK_NAME: "CUSTOM_CLK_1"
+- DECODER_OUT_CLK_NAME: "CUSTOM_CLK_1"
+- STRATEGY_CLK_NAME: "CUSTOM_CLK_1"
+
+
+# HLS Trigger Arguments Conversion (one per OUE hw filling FIFO)
+# HLS_ARGx_CONV_TYPE: one of the following: "bypass"; "shift"; "bin_to_ascii"
+# HLS_ARGx_CONV_INPUT_WIDTH: (relevant only for "shift" or "bin_to_ascii") binary input width in bits
+# HLS_ARGx_CONV_OUTPUT_WIDTH: (relevant only for "bin_to_ascii") ASCII output width in bits
+
+# argument #0: 64-bit aligned on MSB (63:0 input forwarded on 127:64 output)
+- HLS_ARG0_CONV_TYPE: "shift"
+- HLS_ARG0_CONV_INPUT_WIDTH: 64
+- HLS_ARG0_CONV_OUTPUT_WIDTH: -1
+
+# argument #1: 64-bit aligned on MSB (63:0 input forwarded on 127:64 output)
+- HLS_ARG1_CONV_TYPE: "shift"
+- HLS_ARG1_CONV_INPUT_WIDTH: 64
+- HLS_ARG1_CONV_OUTPUT_WIDTH: -1
+
+# argument #2: 128-bit passthrough
+- HLS_ARG2_CONV_TYPE: "bypass"
+- HLS_ARG2_CONV_INPUT_WIDTH: -1
+- HLS_ARG2_CONV_OUTPUT_WIDTH: -1
+
+# argument #3: 128-bit passthrough
+- HLS_ARG3_CONV_TYPE: "bypass"
+- HLS_ARG3_CONV_INPUT_WIDTH: -1
+- HLS_ARG3_CONV_OUTPUT_WIDTH: -1
+
+# argument #4: 128-bit passthrough
+- HLS_ARG4_CONV_TYPE: "bypass"
+- HLS_ARG4_CONV_INPUT_WIDTH: -1
+- HLS_ARG4_CONV_OUTPUT_WIDTH: -1
+
+# Max quantity of messages triggered by the HLS
+- CSRE_LARGE_COLLECTION_COUNT: 4096
+
+# Size in kBytes of order entry message memory
+- CSRE_MESSAGE_MEMORY_KBYTES: 64
+
+# Number of supported TCP sessions by the hwrdware TCP stack
+- TCP_TOTAL_SESSION_COUNT: 8
+
+# Depth of the TCP retry buffer in MTUs for each individual TCP session
+- TCP_RETRY_BUFFER_MTU_QTY: 12
+
+- OUE_CONTENT_FIFO_256_COUNT: 8
+- OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 5
+- OUE_CONTENT_PUF_COUNT: 4
+- OUE_FIX_CHECKSUM_UNITS: 0
+- PAYLOAD_MERGE_CAPABILITY: "false"
