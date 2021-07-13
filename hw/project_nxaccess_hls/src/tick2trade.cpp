@@ -31,7 +31,7 @@ static void fill_header(user_dma_tick2trade_notification& notification, Tick2tra
     // we encode the side of the decision but it's only for showing that we have a message type that could be use 
     // to transport several type of messages to host
     notification.header.msg_type = uint8_t(message_type);
-    notification.header.length = 0x0030;
+    notification.header.length = 0x0020;
 }
 
 void
