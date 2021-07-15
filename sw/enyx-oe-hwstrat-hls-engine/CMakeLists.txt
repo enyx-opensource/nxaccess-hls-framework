@@ -10,9 +10,9 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Enyx Order Entry HLS Hardware Strategy Co
 set(CPACK_PACKAGE_CONTACT "Enyx Support <support@enyx.com>")
 set(CPACK_PACKAGE_VENDOR "Enyx S.A.")
 #TODO: use GetVersionFromChangeLogFile.cmake
-set(CPACK_PACKAGE_VERSION_MAJOR 0)
+set(CPACK_PACKAGE_VERSION_MAJOR 1)
 set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 1)
+set(CPACK_PACKAGE_VERSION_PATCH 0)
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_BUILD_TYPE}")
 set(CPACK_COMPONENTS_ALL base devel)
@@ -57,6 +57,7 @@ link_directories(${EnyxLibs_LIBRARY_DIRS})
 add_subdirectory(lib)
 add_subdirectory(python-binding)
 add_subdirectory(demo)
+add_subdirectory(tools)
 
 # Fake check directory
 add_custom_target(check COMMAND /bin/true)
