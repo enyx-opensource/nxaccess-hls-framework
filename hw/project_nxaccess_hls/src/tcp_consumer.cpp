@@ -168,6 +168,7 @@ TcpConsumer::notification_to_word(const user_dma_tcp_consumer_notification& noti
             out_word.data(128-1, 102)=  notif_in.keep;
             out_word.data(102-1, 96) = notif_in.user;
             out_word.data(96-1, 80) = notif_in.session; 
+            out_word.data(80-1, 0) = 0; 
             out_word.last = 1;
             break;
         }

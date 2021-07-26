@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <utility>
 
 #include "../include/enyx/hls/helpers.hpp"
 #include "../include/enyx/hls/string.hpp"
@@ -131,6 +132,11 @@ private:
         auto triggered = dump_trigger_to_file(trigger_out, generate_filename("trigger_out", ".gen", Index, burst_index));
         auto trigger_ref = read_trigger_from_file(generate_filename("trigger_out", ".ref", Index, burst_index));
         compare_generated_and_reference(trigger_ref, triggered);
+
+        // write DMA egress contents to file and compare with expected data
+        auto dma_out_contents = write_dma_to_file(dma_data_out, generate_filename("dma_user_out", ".gen", Index, burst_index));
+        auto dma_out_contents_ref = read_dma_from_file(generate_filename("dma_user_out", ".ref", Index, burst_index));
+        compare_generated_and_reference(dma_out_contents_ref, dma_out_contents);
 
         // throw std::invalid_argument("stop L98");
         // std::cout << "[TEST] Comparing trigger output with ref file...\n";
@@ -352,6 +358,9 @@ private:
                 enyx::fill_stream_with_text(data_in, l);
     }
 
+
+
+
     static void
     convert_string_to_cpu2fpgaheader(enyx::oe::hwstrat::cpu2fpga_header & out,  std::istringstream& in)
     {
@@ -539,6 +548,43 @@ private:
         }
 
         std::cout << "[TB] Dumped " << std::dec << acc << " triggers to file. \n";
+        return ret;
+    }
+
+    static std::vector<std::string>
+    write_dma_to_file(hls::stream<enyx::hfp::dma_user_channel_data_out> & dma_data, std::string const & file)
+    {
+        std::vector<std::string> ret;
+        std::string ret_line;
+        std::ofstream data_out_file(file.c_str());
+        assert(data_out_file);
+        data_out_file << nxoe::get_dma_out_file_header() << std::endl;
+        int acc = 0;
+        while(!dma_data.empty()) {
+            std::pair<std::string, bool> dma_out_info = nxoe::convert_dma_out_to_text(dma_data);
+            std::string data = dma_out_info.first;
+            bool end_of_line = dma_out_info.second;
+            data_out_file << data;
+            ret_line.append(data);
+            if (end_of_line) {
+                ret.push_back(ret_line);
+                ret_line.clear();
+                data_out_file << "\n";
+            }
+            ++acc;
+        }
+        return ret;
+    }
+
+    static std::vector<std::string>
+    read_dma_from_file(std::string const& file)
+    {
+        std::vector<std::string> ret;
+        std::ifstream data_out_file(file.c_str());
+        assert(data_out_file);
+        for (std::string l; std::getline(data_out_file, l); )
+            if (! l.empty() && l[0] != '#')
+                ret.push_back(l);
         return ret;
     }
 
