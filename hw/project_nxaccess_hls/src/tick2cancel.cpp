@@ -6,7 +6,7 @@
 //--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
 //--!
 //--! © Copyright            Enyx 2019
-//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
 //--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 //--------------------------------------------------------------------------------
 
@@ -29,9 +29,9 @@ static void fill_header(user_dma_tick2cancel_notification& notification, Tick2ca
     notification.header.version = 1;
     notification.header.source = enyx::oe::nxaccess_hw_algo::Tick2cancel;
 
-    // we encode the side of the decision but it's only for showing that we have a message type that could be use 
+    // we encode the side of the decision but it's only for showing that we have a message type that could be use
     // to transport several type of messages to host
-    notification.header.msg_type = uint8_t(message_type); 
+    notification.header.msg_type = uint8_t(message_type);
     notification.header.length = 0x0030; // force length value since sizeof yield incorrect value because vivado (as of 2018.3) has trouble with packed structure
     // notification.header.length = sizeof(user_dma_tick2cancel_notification);
 }
@@ -147,9 +147,9 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
                                      decision_data.timestamp, // Timestamp can be passed as a unique ID
-                                     0x1ee1312cafedeca, // Specify any 128 bit value that you want
-                                     1, // 1 means tick-to-cancel trigger
-                                     0 // 0 means trade summary below bid threshold
+                                     (uint64_t)0x1ee1312cafedeca, // Specify any 128 bit value that you want
+                                     (uint8_t)1, // 1 means tick-to-cancel trigger
+                                     (uint8_t)0 // 0 means trade summary below bid threshold
                                      ); // Other Arguments don't have to be specified if not needed
 
              // write notification in 1clk max
@@ -176,9 +176,9 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
                                      decision_data.timestamp, // Timestamp can be passed as a unique ID
-                                     0x1ee1314cafedeca, // Specify any 128 bit value that you want
-                                     1, // 1 means tick-to-cancel trigger
-                                     1 // 1 means trade summary above ask threshold
+                                     (uint64_t)0x1ee1314cafedeca, // Specify any 128 bit value that you want
+                                     (uint8_t)1, // 1 means tick-to-cancel trigger
+                                     (uint8_t)1 // 1 means trade summary above ask threshold
                                      ); // Other Arguments don't have to be specified if not needed
 
             // write notification in 1clk max
@@ -202,7 +202,7 @@ enyx::hfp::dma_user_channel_data_out
 Tick2cancel::notification_to_word(const user_dma_tick2cancel_notification& notif_in, int word_index)
 {
     enyx::hfp::dma_user_channel_data_out out_word;
-    
+
     switch(word_index) {
         case 1: {
         out_word.data(127, 64) =  enyx::oe::hwstrat::get_word(notif_in.header); //64
@@ -225,7 +225,7 @@ Tick2cancel::notification_to_word(const user_dma_tick2cancel_notification& notif
         }
          default:
             assert(false && "Handling only 3 words for user_dma_tick2cancel_notification encoding");
-  
+
     }
     return out_word;
 }

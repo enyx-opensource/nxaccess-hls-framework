@@ -19,6 +19,7 @@ Application configuration: !!omap
 - SANDBOX_TO_MSU_TOP_PIPE_COUNT: 2
 - FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 2
 
+
 - ENGINE_CLK_NAME: "CUSTOM_CLK_1"
 - DECODER_OUT_CLK_NAME: "CUSTOM_CLK_1"
 - STRATEGY_CLK_NAME: "CUSTOM_CLK_1"
@@ -29,14 +30,14 @@ Application configuration: !!omap
 # HLS_ARGx_CONV_INPUT_WIDTH: (relevant only for "shift" or "bin_to_ascii") binary input width in bits
 # HLS_ARGx_CONV_OUTPUT_WIDTH: (relevant only for "bin_to_ascii") ASCII output width in bits
 
-# argument #0: 64-bit aligned on MSB (63:0 input forwarded on 127:64 output)
-- HLS_ARG0_CONV_TYPE: "shift"
-- HLS_ARG0_CONV_INPUT_WIDTH: 64
+# argument #0: 128-bit passthrough
+- HLS_ARG0_CONV_TYPE: "bypass"
+- HLS_ARG0_CONV_INPUT_WIDTH: -1
 - HLS_ARG0_CONV_OUTPUT_WIDTH: -1
 
-# argument #1: 64-bit aligned on MSB (63:0 input forwarded on 127:64 output)
-- HLS_ARG1_CONV_TYPE: "shift"
-- HLS_ARG1_CONV_INPUT_WIDTH: 64
+# argument #1: 128-bit passthrough
+- HLS_ARG1_CONV_TYPE: "bypass"
+- HLS_ARG1_CONV_INPUT_WIDTH: -1
 - HLS_ARG1_CONV_OUTPUT_WIDTH: -1
 
 # argument #2: 128-bit passthrough

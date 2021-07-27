@@ -6,7 +6,7 @@
 //--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
 //--!
 //--! © Copyright            Enyx 2019
-//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
 //--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 //--------------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ public:
      */
     struct ContextData {
         ap_uint<64>  price;                 // price that triggered
-        ap_uint<128> timestamp;             // timestamp of the triggering event
+        ap_uint<64>  timestamp;             // timestamp of the triggering event
         ap_uint<64>  sequence_number;       // sequence number of the market packet
         ap_uint<24>  instr_id;              // instrument id
     };
