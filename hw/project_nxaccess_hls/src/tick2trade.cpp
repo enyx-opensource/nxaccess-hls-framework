@@ -124,9 +124,9 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_bid_collection_id, // Collection to Trigger
                                          pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
-                                         0x1ee1311cafedeca, // Specify any 128 bit value that you want
-                                         2, // 2 means tick-to-trade trigger
-                                         1 // 1 means trade summary < top bid
+                                         (uint64_t)0x1ee1311cafedeca, // Specify any 128 bit value that you want
+                                         (uint8_t)2, // 2 means tick-to-trade trigger
+                                         (uint8_t)1 // 1 means trade summary < top bid
                                          ); // Other Arguments don't have to be specified if not needed
 
                 user_dma_tick2trade_notification notification;
@@ -152,9 +152,9 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_ask_collection_id, // Collection to Trigger
                                          pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
-                                         0x1ee1313cafedeca, // Specify any 128 bit value that you want
-                                         2, // 2 means tick-to-trade trigger
-                                         2 // 2 means trade summary > top ask
+                                         (uint64_t)0x1ee1313cafedeca, // Specify any 128 bit value that you want
+                                         (uint8_t)2, // 2 means tick-to-trade trigger
+                                         (uint8_t)2 // 2 means trade summary > top ask
                                          ); // Other Arguments don't have to be specified if not needed
 
                 // write notification in 1clk max

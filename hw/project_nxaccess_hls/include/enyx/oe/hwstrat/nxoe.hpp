@@ -6,7 +6,7 @@
 //--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
 //--!
 //--! © Copyright            Enyx 2019
-//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
 //--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 //--------------------------------------------------------------------------------
 
@@ -40,6 +40,37 @@ struct trigger_meta_size {
     static std::size_t const TRIGGER_SIZE_ARG4       = _TRIGGER_SIZE_DATA_ARGUMENT; // 128 bits
 
 };
+template <typename T>
+struct BitSize
+{
+    static const size_t SIZE = sizeof(T)*8;
+};
+
+template <int WIDTH>
+struct BitSize< ap_uint< WIDTH > >
+{
+    static const size_t SIZE = WIDTH;
+};
+
+template <typename T> size_t get_padding(const T&)
+{
+//  static_assert((sizeof(T)*8) <= trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT, "Argument padding out of bound > 128");
+    return sizeof(T)*8;
+}
+
+template <int WIDTH> size_t  get_padding(const ap_uint<WIDTH>& value)
+{
+//  static_assert(sizeof(WIDTH) <= trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT, "Argument padding out of bound > 128");
+    return WIDTH;
+}
+
+template <typename T>
+ap_uint<trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT> pad_data(T const& value)
+{
+    ap_uint<trigger_meta_size::_TRIGGER_SIZE_DATA_ARGUMENT> ret(value);
+    ret.rrotate(BitSize<T>::SIZE);
+    return ret;
+}
 
 // this meta struct is only here to avoid coding errors
 // C++ allows offsetof() to get the offset of the BYTE-aligned sturct, representing bit-aligned FPGA struct
@@ -83,8 +114,8 @@ struct trigger_command {
     	trigger_command_axi arg;
     	arg = _arg;
     	arg.data.reverse(); // reverse bit ordering (end_of_extra is MSB on AXI)
-        ARG_TO_MEMBER(collection_id,     TRIGGER_SIZE_COLLECTION_ID) ;
-        ARG_TO_MEMBER(valid_arguments, TRIGGER_SIZE_ARGUMENTS) ;
+        ARG_TO_MEMBER(collection_id,    TRIGGER_SIZE_COLLECTION_ID) ;
+        ARG_TO_MEMBER(valid_arguments,  TRIGGER_SIZE_ARGUMENTS) ;
         ARG_TO_MEMBER(arg0,             TRIGGER_SIZE_ARG0) ;
         ARG_TO_MEMBER(arg1,             TRIGGER_SIZE_ARG1) ;
         ARG_TO_MEMBER(arg2,             TRIGGER_SIZE_ARG2) ;
@@ -162,15 +193,16 @@ static void
     }
 
 // Trigger with 1 argument
+template <typename TARG0>
 static void
     trigger_collection(hls::stream<trigger_command_axi> & trigger_axibus_out,
                        ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> collection_id,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG0> arg0)
+                       TARG0 arg0)
     {
         trigger_collection_internal(trigger_axibus_out,
                                     collection_id,
                                     0b00001,
-                                    arg0,
+                                    pad_data(arg0),
                                     0,
                                     0,
                                     0,
@@ -178,77 +210,81 @@ static void
     }
 
 // Trigger with 2 arguments
+template <typename TARG0,typename TARG1>
 static void
     trigger_collection(hls::stream<trigger_command_axi> & trigger_axibus_out,
                        ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> collection_id,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG0> arg0,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG1> arg1)
+                       const TARG0& arg0,
+                       const TARG1& arg1)
     {
         trigger_collection_internal(trigger_axibus_out,
                                     collection_id,
                                     0b00011,
-                                    arg0,
-                                    arg1,
+                                    pad_data(arg0),
+                                    pad_data(arg1),
                                     0,
                                     0,
                                     0);
     }
 
 // Trigger with 3 arguments
+template <typename TARG0,typename TARG1,typename TARG2>
 static void
     trigger_collection(hls::stream<trigger_command_axi> & trigger_axibus_out,
                        ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> collection_id,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG0> arg0,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG1> arg1,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG2> arg2)
+                       const TARG0& arg0,
+                       const TARG1& arg1,
+                       const TARG2& arg2)
     {
         trigger_collection_internal(trigger_axibus_out,
                                     collection_id,
                                     0b00111,
-                                    arg0,
-                                    arg1,
-                                    arg2,
+                                    pad_data(arg0),
+                                    pad_data(arg1),
+                                    pad_data(arg2),
                                     0,
                                     0);
     }
 
 // Trigger with 4 arguments
+template <typename TARG0,typename TARG1,typename TARG2,typename TARG3>
 static void
     trigger_collection(hls::stream<trigger_command_axi> & trigger_axibus_out,
                        ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> collection_id,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG0> arg0,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG1> arg1,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG2> arg2,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG3> arg3)
+                       const TARG0& arg0,
+                       const TARG1& arg1,
+                       const TARG2& arg2,
+                       const TARG3& arg3)
     {
         trigger_collection_internal(trigger_axibus_out,
                                     collection_id,
                                     0b01111,
-                                    arg0,
-                                    arg1,
-                                    arg2,
-                                    arg3,
+                                    pad_data(arg0),
+                                    pad_data(arg1),
+                                    pad_data(arg2),
+                                    pad_data(arg3),
                                     0);
     }
 
 // Trigger with 5 arguments
+template <typename TARG0,typename TARG1,typename TARG2,typename TARG3,typename TARG4>
 static void
     trigger_collection(hls::stream<trigger_command_axi> & trigger_axibus_out,
                        ap_uint<trigger_meta_size::TRIGGER_SIZE_COLLECTION_ID> collection_id,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG0> arg0,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG1> arg1,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG2> arg2,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG3> arg3,
-                       ap_uint<trigger_meta_size::TRIGGER_SIZE_ARG4> arg4)
+                       const TARG0& arg0,
+                       const TARG1& arg1,
+                       const TARG2& arg2,
+                       const TARG3& arg3,
+                       const TARG4& arg4)
     {
         trigger_collection_internal(trigger_axibus_out,
                                     collection_id,
                                     0b11111,
-                                    arg0,
-                                    arg1,
-                                    arg2,
-                                    arg3,
-                                    arg4);
+                                    pad_data(arg0),
+                                    pad_data(arg1),
+                                    pad_data(arg2),
+                                    pad_data(arg3),
+                                    pad_data(arg4));
     }
 
 
