@@ -18,9 +18,11 @@
 #include <sstream>
 #include <iomanip>
 #include <ap_int.h>
+#include <utility>
 
 #include "../../../enyx/hls/helpers.hpp"
 #include "../../../enyx/hls/byte.hpp"
+#include "../../../enyx/hfp/hfp.hpp"
 #include "../../../enyx/md/hw/nxbus.hpp"
 
 namespace enyx {
@@ -56,6 +58,11 @@ std::string get_trigger_command_axi_file_format_header() {
     return std::string("# collection_id 16 | parameters_masks 5 | data0 2x 64 |  data1 2x 64 |  data2 2x 64 |  data3 2x 64 |  data4 2x 64 | \n");
 }
 
+std::string get_dma_out_file_header() {
+
+    return std::string("# received packets transmitted on the DMA egress bus\n# IMPORTANT: contents are in hex-string only (no spaces)\n");
+}
+
 /// converts a trigger command to text 
 std::string 
 convert_trigger_command_axi_to_text(hls::stream<enyx::oe::hwstrat::trigger_command_axi>& in)
@@ -85,4 +92,22 @@ convert_trigger_command_axi_to_text(hls::stream<enyx::oe::hwstrat::trigger_comma
     }
     return ret.str();
 } // convert_trigger_command_axi_to_text
+
+/// converts a DMA data packet into text and end-of-line boolean
+std::pair<std::string, bool> 
+convert_dma_out_to_text(hls::stream<enyx::hfp::dma_user_channel_data_out>& in)
+{
+    std::stringstream ret;
+    bool end_of_line;
+    if(!in.empty()) {
+        auto _read_axi = in.read();
+        ret 
+            << std::setfill('0')
+            << std::setw(16) << std::hex << static_cast<uint64_t>(_read_axi.data >> 64)
+            << std::setw(16) << std::hex << static_cast<uint64_t>(_read_axi.data & 0xffffffffffffffff);
+        end_of_line = _read_axi.last == 1;
+    }
+    return std::make_pair(ret.str(), end_of_line);
+}
+
 }}} // Namespaces

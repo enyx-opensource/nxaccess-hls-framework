@@ -194,6 +194,7 @@ Tick2trade::notification_to_word(const user_dma_tick2trade_notification& notif_i
             out_word.data(63,32) = notif_in.instrument_id; // 32
             out_word.data(31, 16) = notif_in.sent_collection_id;
             out_word.data(15,8) = notif_in.is_bid;
+            out_word.data(8-1, 0) = 0;
             out_word.last = 1;
             break;
         }

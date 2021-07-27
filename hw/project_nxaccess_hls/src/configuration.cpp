@@ -236,6 +236,7 @@ InstrumentConfiguration::write_word(const user_dma_update_instrument_configurati
         out_word.data(79, 64) = in.tick_to_cancel_collection_id; //16
         out_word.data(63, 48) = in.tick_to_trade_ask_collection_id; //16
         out_word.data(47, 40) = in.enabled; //8
+        out_word.data(40-1, 0) = 0;
         out_word.last = 1;
         break;
     }
@@ -267,6 +268,7 @@ InstrumentConfiguration::write_word(const user_dma_update_instrument_configurati
         out_word.data(79, 64) = in.tick_to_cancel_collection_id; //16
         out_word.data(63, 48) = in.tick_to_trade_ask_collection_id; //16
         out_word.data(47, 40) = in.enabled; //8
+        out_word.data(40-1, 0) = 0;
         out_word.last = 1;
         break;
     }
