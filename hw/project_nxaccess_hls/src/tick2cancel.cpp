@@ -82,7 +82,7 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 decision_data.sequence_number = nxbus_word_in.data0;
                 decision_data.timestamp = nxbus_word_in.price;  // price field is use for timestamp mapping in nxbus Packet info message
 
-            } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
+            } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_REPORT ) {
 
                 std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                             << "Processing : Trade Summary message price=" << nxbus_word_in.price

@@ -87,7 +87,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                     last_sequence_number = nxbus_word_in.data0;
                     last_sending_time = nxbus_word_in.price; // price field is use for timestamp mapping in nxbus Packet info message
 
-                } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
+                } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_REPORT ) {
 
                     std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                                 << "Processing : Trade Summary message price=" << nxbus_word_in.price << std::endl;
