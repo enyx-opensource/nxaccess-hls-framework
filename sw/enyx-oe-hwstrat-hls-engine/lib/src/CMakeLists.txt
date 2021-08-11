@@ -1,5 +1,6 @@
 add_library(enyx-oe-hwstrat-hls-engine SHARED
         AlgorithmDriver.cpp
+        AlgorithmDispatcher.cpp
         ErrorCode.cpp
         Protocol.cpp)
 

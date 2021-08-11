@@ -22,17 +22,7 @@ int main(int argc, char ** argv) {
     }
 
     const std::size_t accelerator_id = std::atoi(argv[1]);
-    std::vector<std::string> nxbus_files;
-    for (int i = 2; i < argc ; ++i) {
-        nxbus_files.emplace_back(argv[i]);
-    }
-
-    Buffers to_inject;
-    for (const auto& file : nxbus_files) {
-        const auto& buffers = parse_simu_file(file);
-        to_inject.insert(to_inject.end(), buffers.cbegin(), buffers.cend());
-    }
-
+    const Buffers to_inject = parse_simu_files(&argv[2], &argv[argc]);
 
     try {
         inject(accelerator_id, stream_name, to_inject);

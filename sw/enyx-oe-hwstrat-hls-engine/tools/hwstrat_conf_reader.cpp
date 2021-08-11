@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
      std::signal(SIGTERM, &signal_handler);
 
     try {
-        auto accelerator = demo::find_accelerator(accelerator_id);
+        const auto accelerator = demo::find_accelerator(accelerator_id);
         auto a2c_stream = demo::find_a2c_stream(accelerator, stream_name);
         auto poller = a2c_stream.get_poller(printer);
         while (not stop) {

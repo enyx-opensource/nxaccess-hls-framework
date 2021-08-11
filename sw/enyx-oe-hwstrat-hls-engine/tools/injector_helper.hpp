@@ -20,26 +20,6 @@ using Buffer = std::vector<uint8_t>;
 using Buffers = std::vector<Buffer>;
 
 
-template <typename Functor>
-inline
-std::error_code
-retry_with_timeout(Functor&& fn,
-                  const std::chrono::milliseconds& timeout = std::chrono::milliseconds{100}) {
-    constexpr auto eagain = std::errc::resource_unavailable_try_again;
-    const auto now = std::chrono::steady_clock::now;
-    // Small optimisation to not call now() if it works right away.
-    auto ret = fn();
-    if (ret != eagain) {
-        return ret;
-    }
-    const auto start = now();
-    while ((ret == eagain) and (now() - start < timeout)) {
-        ret = fn();
-    }
-    return ret;
-}
-
-
 inline
 Buffer
 parse_simu_file_line(const std::string& line, std::size_t line_number, const std::string& filename) {
@@ -65,17 +45,25 @@ parse_simu_file_line(const std::string& line, std::size_t line_number, const std
 }
 
 inline
-Buffers
-parse_simu_file(const std::string& filename) {
+void
+parse_simu_file(Buffers& ret, const std::string& filename) {
     std::ifstream file(filename);
     if (not file.is_open()) {
         std::cerr << "Unable to open file: '" + filename + "'\n";
-        return {};
+        return;
     }
     std::size_t line_number = 1;
-    Buffers ret;
     for (std::string line; std::getline(file, line);) {
         ret.emplace_back(parse_simu_file_line(line, line_number++, filename));
+    }
+}
+
+template <typename IteratorT>
+Buffers
+parse_simu_files(IteratorT begin, IteratorT end) {
+    Buffers ret;
+    for (; begin != end; ++begin) {
+        parse_simu_file(ret, *begin);
     }
     return ret;
 }
@@ -90,9 +78,9 @@ inject(std::size_t accelerator_id, const std::string& stream_name, const Buffers
         if (buffer.empty()) { continue; }
         const auto send_fn = [&c2a_stream, &buffer] () {
                 return c2a_stream.send(buffer.data(), buffer.size()).error(); };
-        const auto send_ret = retry_with_timeout(send_fn);
-        if (send_ret) {
-            throw std::runtime_error("Unable to send data: " + send_ret.message());
+        const auto send_error = demo::retry_on_eagain_with_timeout(send_fn);
+        if (send_error) {
+            throw std::runtime_error("Unable to send data: " + send_error.message());
         }
     }
 }
