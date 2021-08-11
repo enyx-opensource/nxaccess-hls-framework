@@ -8,7 +8,7 @@ Application configuration: !!omap
 #---------------------------------------------
 
 # Max number of supported market data multicast stream
-- MARKET_STREAM_COUNT_MAX: 4
+- MARKET_STREAM_COUNT_MAX: 32
 
 # Max number of instruments (in thousands)
 - MARKET_INSTR_HT_K_INSTR_COUNT_MAX: 1
