@@ -11,15 +11,17 @@
 #include <vector>
 
 #include <enyx/utils/BufferView.hpp>
+#include <enyx/hw/accelerator.hpp>
+#include <enyx/hw/c2a_stream.hpp>
+#include <enyx/hw/a2c_stream.hpp>
 
 #include <enyx/oe/hwstrat/demo/Protocol.hpp>
+#include <enyx/oe/hwstrat/demo/AlgorithmDispatcher.hpp>
 
 namespace enyx {
 namespace oe {
 namespace hwstrat {
 namespace demo {
-
-class Handler;
 
 /**
  *  @brief This class allows user to communication with the HLS algorithm.
@@ -57,9 +59,8 @@ public:
      *  @brief Repeatedly called to process events.
      *  @note For maximum performance, the thread calling this function
      *        should be pinned to a dedicated CPU, isolated from scheduler.
-     *  @return The error code
      */
-    std::error_code
+    void
     poll();
 
     /**
@@ -91,9 +92,22 @@ public:
             const utils::BufferView<const uint8_t>& arg3 = {},
             const utils::BufferView<const uint8_t>& arg4 = {});
 
+    /**
+     * @brief Trigger an collection using the sandbox with some arguments.
+     *        Depending on the number of argument, the message sent will have a different size.
+     *
+     * @param to_send binded argument message structure
+     * @return std::error_code An error code.  User shall retry when error code is [ std::errc::resource_unavailable_try_again ].
+     */
+    std::error_code
+    trigger(const TriggerWithArgsMessage& to_send);
+
 private:
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    enyx::hw::accelerator accelerator_;
+    enyx::hw::c2a_stream c2a_stream_;
+    enyx::hw::a2c_stream a2c_stream_;
+    AlgorithmDispatcher dispatcher_;
+    enyx::hw::a2c_stream::poller<std::reference_wrapper<AlgorithmDispatcher>> poller_;
 };
 
 } // namespace demo

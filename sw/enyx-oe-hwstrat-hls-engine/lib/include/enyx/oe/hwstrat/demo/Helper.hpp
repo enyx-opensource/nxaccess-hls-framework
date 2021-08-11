@@ -8,6 +8,8 @@
 #include <memory>
 #include <stdexcept>
 #include <system_error>
+#include <sstream>
+#include <iomanip>
 
 #include <enyx/hw/a2c_stream.hpp>
 #include <enyx/hw/c2a_stream.hpp>
@@ -38,7 +40,7 @@ find_accelerator(uint8_t accelerator_index);
  * @throw runtime error if not found.
  */
 enyx::hw::c2a_stream
-find_c2a_stream(enyx::hw::accelerator& accelerator, const std::string & usage);
+find_c2a_stream(const enyx::hw::accelerator& accelerator, const std::string & usage);
 
 /**
  * @brief Find a PPGA to CPU stream using it's usage.
@@ -49,7 +51,7 @@ find_c2a_stream(enyx::hw::accelerator& accelerator, const std::string & usage);
  * @throw runtime error if not found.
  */
 enyx::hw::a2c_stream
-find_a2c_stream(enyx::hw::accelerator& accelerator, const std::string & usage);
+find_a2c_stream(const enyx::hw::accelerator& accelerator, const std::string & usage);
 
 
 
@@ -67,7 +69,7 @@ find_accelerator(uint8_t accelerator_index) {
 
 inline
 enyx::hw::a2c_stream
-find_a2c_stream(enyx::hw::accelerator& accelerator, const std::string & usage) {
+find_a2c_stream(const enyx::hw::accelerator& accelerator, const std::string & usage) {
     // Find and instantiate the CPU to accelerator stream
     const enyx::hw::name name(usage);
     const enyx::hw::filter filter(name);
@@ -80,7 +82,7 @@ find_a2c_stream(enyx::hw::accelerator& accelerator, const std::string & usage) {
 
 inline
 enyx::hw::c2a_stream
-find_c2a_stream(enyx::hw::accelerator& accelerator, const std::string & usage) {
+find_c2a_stream(const enyx::hw::accelerator& accelerator, const std::string & usage) {
     // Find and instantiate the CPU to accelerator stream
     const enyx::hw::name name(usage);
     const enyx::hw::filter filter(name);
@@ -89,6 +91,25 @@ find_c2a_stream(enyx::hw::accelerator& accelerator, const std::string & usage) {
         throw std::runtime_error("Unable to retrieve cpu to accelerator stream " + usage);
     }
     return enyx::hw::c2a_stream(descriptors.at(0));
+}
+
+
+template <typename Functor>
+inline
+std::error_code
+retry_on_eagain_with_timeout(Functor&& fn,
+                  const std::chrono::milliseconds& timeout = std::chrono::milliseconds{100}) {
+    constexpr auto eagain = std::errc::resource_unavailable_try_again;
+    const auto now = std::chrono::steady_clock::now;
+    // Small optimisation to not call now() if it works right away.
+    auto ret = fn();
+    if (ret == eagain) {
+        const auto start = now();
+        while ((ret == eagain) and (now() - start < timeout)) {
+            ret = fn();
+        }
+    }
+    return ret;
 }
 
 } // namespace demo
