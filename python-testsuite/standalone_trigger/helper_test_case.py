@@ -14,7 +14,8 @@ from enyx_oe import (
     Accelerator,
     CollectionMetadata,
     IPv4EndPoint,
-    TCPStatusMessage,
+    TCPStatus_established,
+    TCPStatus_opening,
     retrieve_sandbox_info
 )
 
@@ -58,9 +59,9 @@ class StandAloneHelperTestCase(HelperTestCase):
         self.reader.wait_for(2, 1)
         self.assertTrue(len(self.reader.messages), 2)
         self.assertEqual(get_msg_type(self.reader.messages[0]), CollectionMetadata.MessageType_TCPStackStatus)
-        self.assertEqual(get_tcp_stack_message_status(self.reader.messages[0]), TCPStatusMessage.Status_opening)
+        self.assertEqual(get_tcp_stack_message_status(self.reader.messages[0]), TCPStatus_opening)
         self.assertEqual(get_msg_type(self.reader.messages[1]), CollectionMetadata.MessageType_TCPStackStatus)
-        self.assertEqual(get_tcp_stack_message_status(self.reader.messages[1]), TCPStatusMessage.Status_established)
+        self.assertEqual(get_tcp_stack_message_status(self.reader.messages[1]), TCPStatus_established)
         self.reader.messages.pop(0)
         self.reader.messages.pop(0)
         self.assertEqual(len(self.reader.messages), 0)

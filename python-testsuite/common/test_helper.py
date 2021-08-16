@@ -10,8 +10,11 @@ from common.audit_trail_helper import AuditTrailAsyncReader
 from common.wait import waitFor as realWaitFor
 from common.read_helper import AsyncReader
 from enyx_oe import (
+    Accelerator,
+    CollectionStorageAndReadbackEngineManager,
     FifoManager,
     KillSwitchManager as KSManager,
+    OrderUpdateEngineManager,
     TCPSessionManager
 )
 import enyx_oe
@@ -26,7 +29,7 @@ class HelperTestCase(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(level=logging.INFO)
 
-        self.board = enyx_oe.HardwareBoard(0)
+        self.board = Accelerator(0)
 
         if os.getenv('ENYX_FORCE_BOARD_RESET'):
             self.board.reset()
@@ -43,8 +46,8 @@ class HelperTestCase(unittest.TestCase):
         self.reader = None
         self.at_reader = None
 
-        self.csre_manager = enyx_oe.CollectionStorageAndReadbackEngineManager(self.board)
-        self.oue_manager = enyx_oe.OrderUpdateEngineManager(self.board)
+        self.csre_manager = CollectionStorageAndReadbackEngineManager(self.board)
+        self.oue_manager = OrderUpdateEngineManager(self.board)
 
         self.reader = AsyncReader(self.oue_manager)
         self.assertEqual(len(self.reader.messages), 0, "Communication channel not empty before sending")
@@ -64,7 +67,7 @@ class HelperTestCase(unittest.TestCase):
 
     def _disable_usunsed_features(self):
         KSManager(self.board).disable()
-        fifo_manager = enyx_oe.FifoManager(self.oue_manager)
+        fifo_manager = FifoManager(self.oue_manager)
         fifo_manager.disableAll()
         fifo_manager.clearAll()
         fifo_manager.manager().setDataSourceReportingRate(0)
