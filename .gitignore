@@ -11,4 +11,5 @@
 venv/
 *.egg-info/
 +__pycache__/
-
+hw/project_nxaccess_hls/solution_xcvu9p_3e_nxAccess/
+hw/project_nxaccess_hls/vivado_hls.app
