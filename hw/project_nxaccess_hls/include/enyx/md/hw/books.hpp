@@ -158,6 +158,10 @@ public: // public data
                 // extra-cycle word
                 if (current_opcode == NXBUS_OPCODE_BOOK_UPDATE) {
                     output.uncross_depth = nxbus_word_in.order_id(48-1, 40);
+
+                    std::cout << "[DECISION][book_updater] [uncross_depth " << std::hex << output.uncross_depth << "] "
+                                << std::endl;
+
                     if (nxbus_word_in.end_of_extra) {
                         book_update_request_out.write(output);
                     }
