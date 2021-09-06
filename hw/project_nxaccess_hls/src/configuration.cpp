@@ -395,6 +395,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
 
             user_dma_update_instrument_configuration_ack ack;
             //header
+            ack.header.reserved = 0;
             ack.header.error = 0;
             ack.header.version = 1;
             ack.header.source = enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration;

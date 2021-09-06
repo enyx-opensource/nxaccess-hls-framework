@@ -25,6 +25,7 @@ namespace nxaccess_hw_algo {
 using namespace enyx::oe::hwstrat;
 
 static void fill_header(user_dma_tick2trade_notification& notification, Tick2trade::notifications_messages_types message_type) {
+    notification.header.reserved = 0;
     notification.header.error = 0;
     notification.header.version = 1;
     notification.header.source = enyx::oe::nxaccess_hw_algo::Tick2trade;
