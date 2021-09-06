@@ -124,6 +124,7 @@ public: // public data
         #pragma HLS RESET variable=current_opcode
 
         static BooksData<2,256>::halfbook_entry_update_request output;
+        #pragma HLS RESET variable=output
 
         // Local variables
         nxbus_axi nxbus_data_in;
