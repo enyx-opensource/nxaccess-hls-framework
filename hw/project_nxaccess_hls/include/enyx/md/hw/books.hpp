@@ -37,6 +37,7 @@ class BooksData
         ap_uint<32> book_index;
         ap_uint<1> side; //buy_nsell:  buy = 1, sell = 0
         ap_uint<nxbus_meta_sizes::NXBUS_SIZE_PRICE> toplevel_price;
+        ap_uint<8> uncross_depth; // uncross depth information from the PBU feature
     };
 
     /// memory structure used for storing instrument configuration
@@ -119,6 +120,12 @@ public: // public data
         static bool is_end_of_extra = true; // assume previous message contains end of extra
         #pragma HLS RESET variable=is_end_of_extra
 
+        static uint8_t current_opcode = 0x00; // opcode of the current nxbus command (in case of multi-cycle commands)
+        #pragma HLS RESET variable=current_opcode
+
+        static BooksData<2,256>::halfbook_entry_update_request output;
+        #pragma HLS RESET variable=output
+
         // Local variables
         nxbus_axi nxbus_data_in;
         //TODO check if these pragmas are really required.
@@ -130,6 +137,7 @@ public: // public data
             nxbus_data_in = nxbus_in.read();
             nxbus_word_in = static_cast<nxbus>(nxbus_data_in);
             if (is_end_of_extra) { // only process nxbus messages with EoE flag
+                current_opcode = nxbus_word_in.opcode;
                 if ((nxbus_word_in.opcode == NXBUS_OPCODE_BOOK_UPDATE) &&
                         (nxbus_word_in.data2(7,0) == 0)) { //only keep level 0 of buy or sell side
 
@@ -138,13 +146,30 @@ public: // public data
                                 << " price=" << nxbus_word_in.price
                                 << " side=" << nxbus_word_in.buy_nsell
                                 << std::endl;
-                    BooksData<2,256>::halfbook_entry_update_request output = BooksData<2,256>::halfbook_entry_update_request();
+                    //BooksData<2,256>::halfbook_entry_update_request output = BooksData<2,256>::halfbook_entry_update_request();
                     output.book_index = nxbus_word_in.instr_id;
                     output.side = nxbus_word_in.buy_nsell;
                     output.toplevel_price = nxbus_word_in.price;
-                    book_update_request_out.write(output);
+                    output.uncross_depth = 0x00;
+                    if (nxbus_word_in.end_of_extra) {
+                        book_update_request_out.write(output);
+                    }
+                }
+            } else {
+                // extra-cycle word
+                if (current_opcode == NXBUS_OPCODE_BOOK_UPDATE) {
+                    // Capture the uncross depth value (HKEX specific)
+                    output.uncross_depth = nxbus_word_in.order_id(48-1, 40);
+
+                    std::cout << "[DECISION][book_updater] [uncross_depth " << std::hex << output.uncross_depth << "] "
+                                << std::endl;
+
+                    if (nxbus_word_in.end_of_extra) {
+                        book_update_request_out.write(output);
+                    }
                 }
             }
+
             is_end_of_extra = nxbus_word_in.end_of_extra; // keep EoE value for next
         }
     } // p_book_updates

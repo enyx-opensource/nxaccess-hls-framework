@@ -28,6 +28,7 @@ namespace nxaccess_hw_algo {
 
 static void
 fill_header(user_dma_tcp_consumer_notification& notification) {
+    notification.header.reserved = 0;
     notification.header.error = 0;
     notification.header.version = 1;
     notification.header.source = enyx::oe::nxaccess_hw_algo::TcpConsumer;
