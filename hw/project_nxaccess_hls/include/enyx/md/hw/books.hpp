@@ -158,6 +158,7 @@ public: // public data
             } else {
                 // extra-cycle word
                 if (current_opcode == NXBUS_OPCODE_BOOK_UPDATE) {
+                    // Capture the uncross depth value (HKEX specific)
                     output.uncross_depth = nxbus_word_in.order_id(48-1, 40);
 
                     std::cout << "[DECISION][book_updater] [uncross_depth " << std::hex << output.uncross_depth << "] "
