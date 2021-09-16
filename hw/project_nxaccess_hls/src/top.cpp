@@ -6,7 +6,7 @@
 //--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
 //--!
 //--! © Copyright            Enyx 2019
-//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
 //--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 //--------------------------------------------------------------------------------
 
@@ -107,13 +107,6 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
    // contextual data to take a trigger decision
    static hls::stream<enyx::oe::nxaccess_hw_algo::Tick2cancel::ContextData> t2c_context;
 
-   // User notification DMA channel : need to arbitrate between configuration module and strategies
-   struct dma_notifications{};
-   typedef enyx::hls_tools::arbiter<dma_notifications, strategy_count +2, enyx::hfp::dma_user_channel_data_out>  dma_notification_arbiter_type;
-   // static hls::stream<dma_user_channel_data_out> notifications_to_cpu[strategy_count+1]; /// transports algo notification to the DMA
-   // #pragma HLS STREAM variable=notifications_to_cpu depth=1
-   // dma_notification_arbiter_type::p_arbitrate(notifications_to_cpu, user_dma_channel_data_out);
-
    // data buses for notifications; as notifying to the DMA can be a long process, we set 32 items as depth for these FIFOs
    static hls::stream<algo::user_dma_update_instrument_configuration_ack> config_to_notifs;
    #pragma HLS STREAM variable=config_to_notifs depth=4
@@ -163,11 +156,11 @@ algorithm_entrypoint(hls::stream<enyx::md::hw::nxbus_axi> & nxbus_in,
                                                                        instrument_read_bus,
                                                                        instrument_read_responses,
                                                                        config_to_notifs,
-                                                                       decisions_ouputs[strategy_count+1]); 
+                                                                       decisions_ouputs[strategy_count+1]);
 
-     // Handle notifications from workers to DMA 
-     algo::Notifications::p_broadcast_notifications(tick2cancel_to_notifs, 
-                                                   tick2trade_to_notifs, 
+     // Handle notifications from workers to DMA
+     algo::Notifications::p_broadcast_notifications(tick2cancel_to_notifs,
+                                                   tick2trade_to_notifs,
                                                    config_to_notifs,
                                                    tcp_to_notifs,
                                                    user_dma_channel_data_out);

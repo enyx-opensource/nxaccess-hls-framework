@@ -60,6 +60,12 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
     static bool is_end_of_extra = true; // at start, assume previous message contains end of extra
     #pragma HLS RESET variable=is_end_of_extra
 
+    static uint64_t  last_sequence_number;
+    #pragma HLS RESET variable=last_sequence_number
+
+    static uint64_t  last_sending_time;
+    #pragma HLS RESET variable=last_sending_time
+
     switch(current_state){
     case READY: {
         if (! nxbus_axi_in.empty()) {
@@ -78,6 +84,8 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                     std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                                 << "Processing : Misc Input Info message  seqnum=" << nxbus_word_in.data0 << std::endl;
+                    last_sequence_number = nxbus_word_in.data0;
+                    last_sending_time = nxbus_word_in.price; // price field is use for timestamp mapping in nxbus Packet info message
 
                 } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
 
@@ -124,10 +132,10 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_bid_collection_id, // Collection to Trigger
-                                         pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
-                                         (uint64_t)0x1ee1311cafedeca, // Specify any 128 bit value that you want
-                                         (uint8_t)2, // 2 means tick-to-trade trigger
-                                         (uint8_t)1 // 1 means trade summary < top bid
+                                         last_sending_time, // Specify any value that you want up to 128 bit
+                                         last_sequence_number, // Specify any value that you want up to 128 bit 
+                                         static_cast<uint8_t>(2), // 2 means tick-to-trade trigger
+                                         static_cast<uint8_t>(1) // 1 means trade summary < top bid
                                          ); // Other Arguments don't have to be specified if not needed
 
                 user_dma_tick2trade_notification notification;
@@ -153,9 +161,9 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_ask_collection_id, // Collection to Trigger
                                          pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
-                                         (uint64_t)0x1ee1313cafedeca, // Specify any 128 bit value that you want
-                                         (uint8_t)2, // 2 means tick-to-trade trigger
-                                         (uint8_t)2 // 2 means trade summary > top ask
+                                         last_sequence_number, // sequence number
+                                         static_cast<uint8_t>(2), // 2 means tick-to-trade trigger
+                                         static_cast<uint8_t>(2) // 2 means trade summary > top ask
                                          ); // Other Arguments don't have to be specified if not needed
 
                 // write notification in 1clk max

@@ -80,6 +80,7 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 // Keep sequence number
                 decision_data.sequence_number = nxbus_word_in.data0;
+                decision_data.timestamp = nxbus_word_in.price;  // price field is use for timestamp mapping in nxbus Packet info message
 
             } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
 
@@ -89,7 +90,6 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                             << std::dec << std::endl;
 
                 // prepare & transfer decision data to trigger()
-                decision_data.timestamp = nxbus_word_in.timestamp;
                 decision_data.price = nxbus_word_in.price;
                 decision_data.instr_id = nxbus_word_in.instr_id;
                 decision_data_out.write(decision_data);
@@ -148,9 +148,9 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
                                      decision_data.timestamp, // Timestamp can be passed as a unique ID
-                                     (uint64_t)0x1ee1312cafedeca, // Specify any 128 bit value that you want
-                                     (uint8_t)1, // 1 means tick-to-cancel trigger
-                                     (uint8_t)0 // 0 means trade summary below bid threshold
+                                     decision_data.sequence_number, // Specify any 128 bit value that you want
+                                     static_cast<uint8_t>(1), // 1 means tick-to-cancel trigger
+                                     static_cast<uint8_t>(0) // 0 means trade summary below bid threshold
                                      ); // Other Arguments don't have to be specified if not needed
 
              // write notification in 1clk max
@@ -177,9 +177,9 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
                                      decision_data.timestamp, // Timestamp can be passed as a unique ID
-                                     (uint64_t)0x1ee1314cafedeca, // Specify any 128 bit value that you want
-                                     (uint8_t)1, // 1 means tick-to-cancel trigger
-                                     (uint8_t)1 // 1 means trade summary above ask threshold
+                                     decision_data.sequence_number, // Specify any 128 bit value that you want
+                                     static_cast<uint8_t>(1), // 1 means tick-to-cancel trigger
+                                     static_cast<uint8_t>(1) // 1 means trade summary above ask threshold
                                      ); // Other Arguments don't have to be specified if not needed
 
             // write notification in 1clk max
