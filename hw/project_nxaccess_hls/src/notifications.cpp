@@ -6,7 +6,7 @@
 //--! Author:                Raphael Charolois (raphael.charolois@enyx.com)
 //--!
 //--! © Copyright            Enyx 2019
-//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets, 
+//--! © Copyright Notice:    The source code for this program is not published or otherwise divested of its trade secrets,
 //--!                        irrespective of what has been deposited with the U.S. Copyright Office.
 //--------------------------------------------------------------------------------
 
@@ -49,15 +49,15 @@ namespace nxaccess_hw_algo {
 /// A better design would be to be agnostic and only consider 128bits "data" buses as inputs of this process.
 /// However, it means that each module has to handle the FSM that converts data to a 128 bits data bus. Also,
 /// this adds latency into the core components.
-/// We can consider this not clean from a design & maintenance point of view ; right. Another approach might 
+/// We can consider this not clean from a design & maintenance point of view ; right. Another approach might
 /// be to use variadic templates providing writers functions so that this code could be generic. Its complexity
 /// would not serve anymore the documentation purpose.
 void Notifications::p_broadcast_notifications(
-    hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in, 
+    hls::stream<user_dma_tick2cancel_notification> &tick2cancel_in,
     hls::stream<user_dma_tick2trade_notification> &tick2trade_in,
     hls::stream<user_dma_update_instrument_configuration_ack> &config_acks_in,
     hls::stream<user_dma_tcp_consumer_notification> &tcp_consumer_in,
-    
+
     hls::stream<enyx::hfp::dma_user_channel_data_out> & conf_out)
 {
 #pragma HLS INLINE recursive
@@ -70,7 +70,7 @@ void Notifications::p_broadcast_notifications(
                 //    WORD4 /// will write word 4 of notification
                  } current_state; /// current state of FSM
     #pragma HLS RESET variable=current_state
-    
+
 
     static enum { Input_Tick2trade = 1,
                  Input_Tick2cancel = 2,
@@ -78,23 +78,23 @@ void Notifications::p_broadcast_notifications(
                  Input_TcpConsumer = 4, }
                  input_type;  // input type being processed
     #pragma HLS RESET variable=input_type
-   
-    static user_dma_tick2trade_notification             notif_t2trade; 
+
+    static user_dma_tick2trade_notification             notif_t2trade;
     static user_dma_update_instrument_configuration_ack notif_config;
     static user_dma_tick2cancel_notification            notif_t2cancel;
     static user_dma_tcp_consumer_notification           notif_tcp;
 
-// note on this FSM : we could remove one state and spare 1 clk cycle; 
+// note on this FSM : we could remove one state and spare 1 clk cycle;
 // we choose to separate the IDLE state from WORD1 for clarity.
 switch(current_state) {
-    // doing nothing, waiting for input 
-    case IDLE  : { 
+    // doing nothing, waiting for input
+    case IDLE  : {
             // got an input from configuration core
-            if(!config_acks_in.empty()) { 
+            if(!config_acks_in.empty()) {
                 input_type = Input_Configuration;
                 notif_config = config_acks_in.read();
                 current_state = WORD1;
-            }  else if (!tick2trade_in.empty()) {  
+            }  else if (!tick2trade_in.empty()) {
                 input_type = Input_Tick2trade;
                 notif_t2trade = tick2trade_in.read();
                 current_state = WORD1;
@@ -106,7 +106,7 @@ switch(current_state) {
                 input_type = Input_TcpConsumer;
                 notif_tcp = tcp_consumer_in.read();
                 current_state = WORD1;
-            }   
+            }
             // else { // no status change, nothing read ! }
         break;
     } // case idle
@@ -139,12 +139,14 @@ switch(current_state) {
             conf_out.write(out);
             break;
         }
+        default:
+            assert(false && "bad input types in WORD1 state ");
 
         } // switch input_type
         current_state = WORD2;
-        break; 
+        break;
     } // case word1
-    // will output second word 
+    // will output second word
     case WORD2: {
         switch(input_type) {
 
@@ -176,12 +178,14 @@ switch(current_state) {
             current_state = IDLE; // we have finished for this notification type
             break;
         }
+        default:
+            assert(false && "bad input types in WORD2 state ");
 
         } // switch input_type
         break;
-    }// case word2 
+    }// case word2
 
-     // will output second word 
+     // will output second word
     case WORD3: {
         switch(input_type) {
 
@@ -201,14 +205,14 @@ switch(current_state) {
         }
         default:
             assert(false && "Only handling 2 input types in WORD3 state ");
-  
+
         } // switch input_type
         break;
     }// case word3
     default:
         assert(false && "invalid state in FSM ");
-  
-    } // switch current state 
+
+    } // switch current state
 
 } // process
 
