@@ -46,7 +46,7 @@ sendToFpga(enyx::hw::c2a_stream & stream,
     const size_t length = message.header.length;
     const uint8_t * const data = reinterpret_cast<const std::uint8_t *>(&message);
     // This log can potentially impact performance, so please remove it for production use.
-    LOG_ME(NX_INFO, "[%s] Raw content of message to be sent: %s",
+    LOG_ME(NX_DEBUG, "[%s] Raw content of message to be sent: %s",
          LogPrefix, enyx::utils::data_format::toHexString({data, length}).c_str());
 
     const auto send_fn = [&stream, data, length] () {
