@@ -24,7 +24,7 @@ AlgorithmDispatcher::operator()(const uint8_t * data, uint32_t size) {
     }
 
     // This log can potentially impact performance, so please remove it for production use.
-    LOG_ME(NX_INFO, "[AlgorithmDispatcher] Raw content of received message : %s",
+    LOG_ME(NX_DEBUG, "[AlgorithmDispatcher] Raw content of received message : %s",
            enyx::utils::data_format::toHexString({data, size}).c_str());
 
     const auto * header = reinterpret_cast<const HeaderType*>(data);
