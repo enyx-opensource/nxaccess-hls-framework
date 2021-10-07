@@ -132,10 +132,8 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_bid_collection_id, // Collection to Trigger
-                                         last_sending_time, // Specify any value that you want up to 128 bit
-                                         last_sequence_number, // Specify any value that you want up to 128 bit 
-                                         static_cast<uint8_t>(2), // 2 means tick-to-trade trigger
-                                         static_cast<uint8_t>(1) // 1 means trade summary < top bid
+                                         last_sequence_number, // Specify any value that you want up to 128 bit
+                                         last_sending_time // Specify any value that you want up to 128 bit
                                          ); // Other Arguments don't have to be specified if not needed
 
                 user_dma_tick2trade_notification notification;
@@ -160,10 +158,8 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_ask_collection_id, // Collection to Trigger
-                                         pending_nxbus_data.timestamp, // Timestamp can be passed as a unique ID
                                          last_sequence_number, // sequence number
-                                         static_cast<uint8_t>(2), // 2 means tick-to-trade trigger
-                                         static_cast<uint8_t>(2) // 2 means trade summary > top ask
+                                         last_sending_time // Timestamp can be passed as a unique ID
                                          ); // Other Arguments don't have to be specified if not needed
 
                 // write notification in 1clk max
