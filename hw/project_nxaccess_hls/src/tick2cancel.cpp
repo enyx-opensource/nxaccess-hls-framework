@@ -147,8 +147,8 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
 
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
-                                     decision_data.sequence_number, // Specify any 128 bit value that you want
-                                     decision_data.timestamp // Timestamp can be passed as a unique ID
+                                     ap_uint<48>(decision_data.sequence_number), // Specify any 128 bit value that you want
+                                     ap_uint<48>(decision_data.timestamp) // Timestamp can be passed as a unique ID
                                      ); // Other Arguments don't have to be specified if not needed
 
              // write notification in 1clk max
@@ -172,10 +172,11 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
                       << " price="  << decision_data.price << " >= threshold price=" << (book.bid_toplevel_price + trigger_config.tick_to_cancel_threshold)
                         << " -> triggering collection "  << std::hex << trigger_config.tick_to_cancel_collection_id << std::dec <<  std::endl;
             std::cout << "trigger collection #" << std::hex << decision_data.timestamp << "\n";
+            ;
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
-                                     decision_data.sequence_number, // Specify any 128 bit value that you want
-                                     decision_data.timestamp // Timestamp can be passed as a unique ID
+                                     ap_uint<48>(decision_data.sequence_number), // Specify any 128 bit value that you want
+                                     ap_uint<48>(decision_data.timestamp) // timestamp truncated to conform to message output size
                                      ); // Other Arguments don't have to be specified if not needed
 
             // write notification in 1clk max
