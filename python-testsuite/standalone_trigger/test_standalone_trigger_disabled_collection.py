@@ -57,11 +57,12 @@ class StandAloneTriggerDisabledCollectionTest(StandAloneHelperTestCase):
                          (1, 1))
 
         self.expect_updated_message(collection_id=1, session_id=0)
-        expected_data = args[0][0] + ' '*16 + \
-                        args[0][1] + ' '*16 + \
-                        args[0][2] + ' '*16 + \
-                        args[0][3] + ' '*16 + \
-                        args[0][4] + ' '*16
+        last_coll_id = 1  # coll_id = [0, 1]
+        expected_data = args[last_coll_id][0] + ' ' * 16 + \
+                        args[last_coll_id][1] + ' ' * 16 + \
+                        args[last_coll_id][2] + ' ' * 16 + \
+                        args[last_coll_id][3] + ' ' * 16 + \
+                        args[last_coll_id][4] + ' ' * 16
         self.expected_audit_trail_sent(session_id=0, data=expected_data.encode('utf-8'))
 
         self.assertEqual(len(self.reader.messages), 0)
