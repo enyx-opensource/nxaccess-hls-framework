@@ -119,7 +119,7 @@ StandAloneTrigger::bind_arguments(TriggerWithArgsMessage& to_send,
             const ArgType& arg3,
             const ArgType& arg4) {
     // Fill header
-    to_send.header.dest = ModulesIds::SoftwareTrigger;
+    to_send.header.dest = static_cast<uint8_t>(ModulesIds::SoftwareTrigger);
     to_send.header.version = 1;
     to_send.header.ack_request = 1;
     to_send.header.msg_type= 1;

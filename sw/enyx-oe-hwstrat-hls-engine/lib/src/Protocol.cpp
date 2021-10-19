@@ -2,7 +2,6 @@
 
 #include <ostream>
 
-#define _BSD_SOURCE
 #include <endian.h>
 
 namespace enyx {

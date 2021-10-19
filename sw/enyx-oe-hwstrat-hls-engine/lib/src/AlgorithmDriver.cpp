@@ -17,9 +17,6 @@
 #include <enyx/utils/data_format/HexString.hpp>
 #include <enyx/utils/log/macros.hpp>
 
-#define _BSD_SOURCE
-#include <endian.h>
-
 #include <enyx/oe/hwstrat/demo/ErrorCode.hpp>
 #include <enyx/oe/hwstrat/demo/Helper.hpp>
 #include <enyx/oe/hwstrat/demo/Handler.hpp>
@@ -34,7 +31,6 @@ namespace demo {
 
 namespace {
 
-constexpr std::uint32_t MMDeviceId = 0;
 const char * LogPrefix = "AlgorithmDriver";
 const char * HfpChannelUsage = "user0";
 
@@ -80,7 +76,7 @@ AlgorithmDriver::sendConfiguration(const InstrumentConfiguration & conf) {
     InstrumentConfigurationMessage update;
     // Header
     update.header.version = APPLICATION_VERSION;
-    update.header.dest = ModulesIds::InstrumentDataConfiguration;
+    update.header.dest = static_cast<uint8_t>(ModulesIds::InstrumentDataConfiguration);
     update.header.msg_type = 1;  // hardware filters on it.
     update.header.ack_request = 1; // not implemented in hardware
     update.header.timestamp = 0x12345678; // dumb value for timestamping.

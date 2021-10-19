@@ -41,8 +41,7 @@ pkg_check_modules(EnyxLibs REQUIRED
     enyxutils>=7.2.7)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=format -Wnon-virtual-dtor -Woverloaded-virtual -Wunused -Wshadow")
-add_definitions(-Wall -Wextra -Wsign-compare)
+add_definitions(-Wall -Wextra -Werror -Wshadow)
 add_definitions(-DENYX_NO_HLS_SUPPORT)
 
 # Add headers directory to include path.
