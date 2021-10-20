@@ -71,7 +71,8 @@ Application configuration: !!omap
 - OUE_CONTENT_FIFO_256_COUNT: 8
 - OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 5
 - OUE_CONTENT_PUF_COUNT: 4
-- OUE_FIX_CHECKSUM_UNITS: 0
+# enable CRC32C support for HKEX
+- OUE_FIX_CHECKSUM_UNITS: 1
 - PAYLOAD_MERGE_CAPABILITY: "false"
 
 Board configuration: !!omap
