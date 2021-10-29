@@ -16,7 +16,8 @@ class StandAloneTriggerDifferentCollectionIdTest(StandAloneHelperTestCase):
         """
         self.connect()
 
-        collection_ids = range(8192)
+        _firmware_max_collections = self.csre_manager.maxCollectionNumber()
+        collection_ids = range(_firmware_max_collections)
 
         for coll_id in collection_ids:
             self.assertMalloc(id=coll_id, data_size=16, instr_size=1)
