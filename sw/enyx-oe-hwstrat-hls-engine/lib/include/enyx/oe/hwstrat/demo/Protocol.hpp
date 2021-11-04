@@ -25,29 +25,29 @@ enum class ModulesIds : uint8_t {
 /// CPU To FPGA header
 struct ENYX_PACKED_STRUCT CpuToFpgaHeader {
     // first byte
-    ModulesIds dest:4;      /// source fpga module id
+    uint8_t dest:4;        /// source fpga module id use enum ModulesIds
     uint8_t version:4;     /// message format version
     // second byte
-    uint8_t reserved:3;       ///
+    uint8_t reserved:3;    ///
     uint8_t ack_request:1; /// Ack message request (1 = want ack)
     uint8_t msg_type:4;    /// message_type, defined per module
 
-    uint32_t timestamp;   /// future use : hw timestamp, unused by soft
-    uint16_t length;    /// message format version
+    uint32_t timestamp;    /// future use : hw timestamp, unused by soft
+    uint16_t length;       /// message format version
 };
 static_assert(sizeof(CpuToFpgaHeader) == 8, "Invalid CpuToFpgaHeader size");
 
 struct ENYX_PACKED_STRUCT FpgaToCpuHeader {
     // first byte
-    uint8_t source:4;  /// source fpga module id
+    uint8_t source:4;      /// source fpga module id use enum ModulesIds
     uint8_t version:4;     /// message format version
     // second byte
-    uint8_t reserved:3;     /// ack
-    uint8_t error:1;     /// error bit in case message is not processed correctly
-    uint8_t msg_type:4;  /// message_type
+    uint8_t reserved:3;    /// ack
+    uint8_t error:1;       /// error bit in case message is not processed correctly
+    uint8_t msg_type:4;    /// message_type
 
-    uint32_t timestamp;   /// future use : hw timestamp, unused for now.
-    uint16_t length;    /// message format version
+    uint32_t timestamp;    /// future use : hw timestamp, unused for now.
+    uint16_t length;       /// message format version
 };
 static_assert(sizeof(FpgaToCpuHeader) == 8, "Invalid FpgaToCpuHeader size");
 
@@ -80,7 +80,7 @@ static_assert(sizeof(InstrumentConfigurationMessage) == 48, "Invalid InstrumentC
 struct ENYX_PACKED_STRUCT TriggerWithArgsHeader {
     uint16_t               collectionId {0}; /// Collection Id
     uint8_t                argBitmap {0};    /// The arguments that will be present in this trigger request. To be mapped directly on the arg_valid bus.
-    std::array<uint8_t, 5> reserved {};      /// Padding
+    std::array<uint8_t, 5> reserved {{}};      /// Padding
 };
 static_assert(sizeof(TriggerWithArgsHeader) == 8, "Invalid TriggerWithArgsHeader size");
 
@@ -88,11 +88,11 @@ static_assert(sizeof(TriggerWithArgsHeader) == 8, "Invalid TriggerWithArgsHeader
  * @brief  Arguments of the collection to trigger.
  */
 struct ENYX_PACKED_STRUCT TriggerArgs {
-    std::array<uint8_t, 16> arg0 {};  /// First argument  - Mandatory
-    std::array<uint8_t, 16> arg1 {};  /// Second argument - Optional
-    std::array<uint8_t, 16> arg2 {};  /// Third argument  - Optional
-    std::array<uint8_t, 16> arg3 {};  /// Forth argument  - Optional
-    std::array<uint8_t, 16> arg4 {};  /// Fifth argument  - Optional
+    std::array<uint8_t, 16> arg0 {{}};  /// First argument  - Mandatory
+    std::array<uint8_t, 16> arg1 {{}};  /// Second argument - Optional
+    std::array<uint8_t, 16> arg2 {{}};  /// Third argument  - Optional
+    std::array<uint8_t, 16> arg3 {{}};  /// Forth argument  - Optional
+    std::array<uint8_t, 16> arg4 {{}};  /// Fifth argument  - Optional
 };
 static_assert(sizeof(TriggerArgs) == 80, "Invalid TriggerWithArgsuint size");
 

@@ -57,7 +57,7 @@ class StandAloneHelperTestCase(HelperTestCase):
         print("Session 0 opened to {}".format(self.server_endpoint))
         self.assertFalse(open_ret)
         self.reader.wait_for(2, 1)
-        self.assertTrue(len(self.reader.messages), 2)
+        self.assertEqual(len(self.reader.messages), 2)
         self.assertEqual(get_msg_type(self.reader.messages[0]), CollectionMetadata.MessageType_TCPStackStatus)
         self.assertEqual(get_tcp_stack_message_status(self.reader.messages[0]), TCPStatus_opening)
         self.assertEqual(get_msg_type(self.reader.messages[1]), CollectionMetadata.MessageType_TCPStackStatus)

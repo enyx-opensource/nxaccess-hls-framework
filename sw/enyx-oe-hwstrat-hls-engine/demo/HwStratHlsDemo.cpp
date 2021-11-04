@@ -18,8 +18,6 @@
 #include <future>
 #include <unordered_map>
 
-// 64 bits endianess functions, only on linux.
-#define _BSD_SOURCE
 #include <endian.h>
 
 // Include enyx handler.
