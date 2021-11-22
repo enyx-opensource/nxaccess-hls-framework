@@ -101,6 +101,7 @@ switch(current_state) {
             } else if (!tick2cancel_in.empty()) {
                 input_type = Input_Tick2cancel;
                 notif_t2cancel = tick2cancel_in.read();
+                notif_t2cancel.header.timestamp = 0x0;
                 current_state = WORD1;
             } else if (!tcp_consumer_in.empty()) {
                 input_type = Input_TcpConsumer;
