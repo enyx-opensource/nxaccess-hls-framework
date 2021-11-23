@@ -86,7 +86,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                     std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                                 << "Processing : Misc Input Info message  seqnum=" << nxbus_word_in.data0 << std::endl;
                     last_sequence_number = nxbus_word_in.data0;
-                    source_id = nxbus_word_in.data1 & 0xFF;
+                    source_id = nxbus_word_in.data1 & 0xFFFF;
 
                 } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
 
@@ -133,7 +133,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_bid_collection_id, // Collection to Trigger
-                                         ap_uint<48>(last_sequence_number), // Specify any 128 bit value that you want
+                                         last_sequence_number, // Specify any 128 bit value that you want
                                          source_id,
                                          'B' // the side that generated trigger
                                          ); // Other Arguments don't have to be specified if not needed
@@ -160,7 +160,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_ask_collection_id, // Collection to Trigger
-                                         ap_uint<48>(last_sequence_number), // Specify any 128 bit value that you want
+                                         last_sequence_number, // Specify any 128 bit value that you want
                                          source_id,
                                          'S' // the side that generated trigger
                                          ); // Other Arguments don't have to be specified if not needed

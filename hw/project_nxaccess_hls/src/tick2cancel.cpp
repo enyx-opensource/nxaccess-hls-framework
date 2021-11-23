@@ -85,7 +85,7 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
 
                 // Keep sequence number
                 decision_data.sequence_number = nxbus_word_in.data0;
-                decision_data.source_id = nxbus_word_in.data1;
+                decision_data.source_id = nxbus_word_in.data1 & 0xFFFF;
                 decision_data.timestamp = nxbus_word_in.price;  // price field is use for timestamp mapping in nxbus Packet info message
 
             } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
@@ -153,7 +153,7 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
 
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
-                                     ap_uint<48>(decision_data.sequence_number), // Specify any 128 bit value that you want
+                                     decision_data.sequence_number, // Specify any 128 bit value that you want
                                      decision_data.source_id
                                      ); // Other Arguments don't have to be specified if not needed
 
@@ -181,7 +181,7 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             ;
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
-                                     ap_uint<48>(decision_data.sequence_number), // Specify any 128 bit value that you want
+                                     decision_data.sequence_number, // Specify any 128 bit value that you want
                                      decision_data.source_id
                                      ); // Other Arguments don't have to be specified if not needed
 
