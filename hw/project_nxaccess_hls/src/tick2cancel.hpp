@@ -43,6 +43,7 @@ public:
         ap_uint<64>  price;                 // price that triggered
         ap_uint<64>  timestamp;             // timestamp of the triggering event
         ap_uint<64>  sequence_number;       // sequence number of the market packet
+        ap_uint<16>  source_id;             // multicast source id of the market packet
         ap_uint<24>  instr_id;              // instrument id
     };
 

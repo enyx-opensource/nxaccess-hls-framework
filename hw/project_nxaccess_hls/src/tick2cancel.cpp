@@ -27,6 +27,7 @@ using namespace enyx::oe::hwstrat;
 static void fill_header(user_dma_tick2cancel_notification& notification, Tick2cancel::notifications_messages_types message_type) {
     notification.header.reserved = 0;
     notification.header.error = 0;
+    notification.header.timestamp = 0;
     notification.header.version = 1;
     notification.header.source = enyx::oe::nxaccess_hw_algo::Tick2cancel;
 
@@ -76,10 +77,15 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
             if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
 
                 std::cout << "[TICK2CANCEL] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
-                            << "Processing : Misc Input Info message seqnum=" << nxbus_word_in.data0 << std::dec << std::endl;
+                            << "Processing : Misc Input Info message"
+                            <<": seqnum(data0)=" << nxbus_word_in.data0
+                            <<", source_id(data1)=" << nxbus_word_in.data1
+                            <<", market ts(price)=" << nxbus_word_in.price
+                            << std::endl;
 
                 // Keep sequence number
                 decision_data.sequence_number = nxbus_word_in.data0;
+                decision_data.source_id = nxbus_word_in.data1;
                 decision_data.timestamp = nxbus_word_in.price;  // price field is use for timestamp mapping in nxbus Packet info message
 
             } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
@@ -148,7 +154,7 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
                                      ap_uint<48>(decision_data.sequence_number), // Specify any 128 bit value that you want
-                                     ap_uint<48>(decision_data.timestamp) // Timestamp can be passed as a unique ID
+                                     decision_data.source_id
                                      ); // Other Arguments don't have to be specified if not needed
 
              // write notification in 1clk max
@@ -176,7 +182,7 @@ void Tick2cancel::trigger(hls::stream<InstrumentConfiguration::instrument_config
             nxoe::trigger_collection(trigger_axibus_out,
                                      trigger_config.tick_to_cancel_collection_id, // Collection to Trigger
                                      ap_uint<48>(decision_data.sequence_number), // Specify any 128 bit value that you want
-                                     ap_uint<48>(decision_data.timestamp) // timestamp truncated to conform to message output size
+                                     decision_data.source_id
                                      ); // Other Arguments don't have to be specified if not needed
 
             // write notification in 1clk max

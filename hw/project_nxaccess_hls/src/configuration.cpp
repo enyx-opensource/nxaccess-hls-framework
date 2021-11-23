@@ -315,6 +315,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
 
     static user_dma_update_instrument_configuration current_dma_message_read; /// DMA message being parsed message.
     static user_dma_software_trigger_message current_software_trigger_message_read; /// DMA message being parsed message.
+    #pragma HLS RESET variable=current_software_trigger_message_read
 
     static instrument_configuration_data_item write_data ;
     static InstrumentConfiguration::instrument_configuration_data_item values[InstrumentConfiguration::instrument_count];
@@ -396,6 +397,7 @@ InstrumentConfiguration::p_handle_instrument_configuration(hls::stream<enyx::hfp
             user_dma_update_instrument_configuration_ack ack;
             //header
             ack.header.reserved = 0;
+            ack.header.timestamp = 0;
             ack.header.error = 0;
             ack.header.version = 1;
             ack.header.source = enyx::oe::nxaccess_hw_algo::InstrumentDataConfiguration;
