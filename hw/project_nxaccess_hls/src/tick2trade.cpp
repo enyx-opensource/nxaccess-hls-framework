@@ -64,8 +64,8 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
     static uint64_t  last_sequence_number;
     #pragma HLS RESET variable=last_sequence_number
 
-    static uint64_t  last_sending_time;
-    #pragma HLS RESET variable=last_sending_time
+    static uint16_t  source_id;
+    #pragma HLS RESET variable=source_id
 
     switch(current_state){
     case READY: {
@@ -86,7 +86,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                     std::cout << "[TICK2TRADE] [nxbus timestamp " << std::hex << nxbus_word_in.timestamp << "] "
                                 << "Processing : Misc Input Info message  seqnum=" << nxbus_word_in.data0 << std::endl;
                     last_sequence_number = nxbus_word_in.data0;
-                    last_sending_time = nxbus_word_in.price; // price field is use for timestamp mapping in nxbus Packet info message
+                    source_id = nxbus_word_in.data1 & 0xFF;
 
                 } else if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_TRADE_SUMMARY ) {
 
@@ -134,7 +134,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_bid_collection_id, // Collection to Trigger
                                          ap_uint<48>(last_sequence_number), // Specify any 128 bit value that you want
-                                         ap_uint<48>(last_sending_time), // Timestamp can be passed as a unique ID
+                                         source_id,
                                          'B' // the side that generated trigger
                                          ); // Other Arguments don't have to be specified if not needed
 
@@ -161,7 +161,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 nxoe::trigger_collection(trigger_axibus_out,
                                          trigger_config.tick_to_trade_ask_collection_id, // Collection to Trigger
                                          ap_uint<48>(last_sequence_number), // Specify any 128 bit value that you want
-                                         ap_uint<48>(last_sending_time), // Timestamp can be passed as a unique ID
+                                         source_id,
                                          'S' // the side that generated trigger
                                          ); // Other Arguments don't have to be specified if not needed
 
