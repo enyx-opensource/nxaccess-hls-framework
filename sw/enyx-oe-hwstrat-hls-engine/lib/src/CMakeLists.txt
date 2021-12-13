@@ -1,10 +1,8 @@
 add_library(enyx-oe-hwstrat-hls-engine SHARED
-            AlgorithmDispatcher.cpp
-            AlgorithmDriver.cpp
-            ErrorCode.cpp
-            Protocol.cpp
-            StandAloneTrigger.cpp
-            )
+        AlgorithmDriver.cpp
+        AlgorithmDispatcher.cpp
+        ErrorCode.cpp
+        Protocol.cpp)
 
 target_include_directories(enyx-oe-hwstrat-hls-engine
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
