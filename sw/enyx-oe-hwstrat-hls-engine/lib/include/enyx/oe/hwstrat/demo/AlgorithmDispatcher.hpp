@@ -7,8 +7,6 @@ namespace oe {
 namespace hwstrat {
 namespace demo {
 
-const uint8_t APPLICATION_VERSION = 1;
-
 class Handler;
 
 struct AlgorithmDispatcher
