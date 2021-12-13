@@ -23,6 +23,8 @@ namespace oe {
 namespace hwstrat {
 namespace demo {
 
+using DataView = enyx::utils::BufferView<const uint8_t>;
+
 /**
  *  @brief This class allows user to communication with the HLS algorithm.
  */
@@ -86,11 +88,11 @@ public:
      */
     std::error_code
     trigger(uint16_t collection_id,
-            const utils::BufferView<const uint8_t>& arg0,
-            const utils::BufferView<const uint8_t>& arg1 = {},
-            const utils::BufferView<const uint8_t>& arg2 = {},
-            const utils::BufferView<const uint8_t>& arg3 = {},
-            const utils::BufferView<const uint8_t>& arg4 = {});
+            const DataView& arg0,
+            const DataView& arg1 = {},
+            const DataView& arg2 = {},
+            const DataView& arg3 = {},
+            const DataView& arg4 = {});
 
     /**
      * @brief Trigger an collection using the sandbox with some arguments.
