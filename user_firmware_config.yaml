@@ -18,6 +18,7 @@ Application configuration: !!omap
 - TCP_FILL_TO_SANDBOX_PIPE_COUNT: 2
 - SANDBOX_TO_MSU_TOP_PIPE_COUNT: 2
 - FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 2
+- REVERT_TRIGGER_ARGUMENT: 1 # This is because TriggerArgument are not set in Order expected by orderEntry stack. So order should be reverted
 
 
 - ENGINE_CLK_NAME: "CUSTOM_CLK_2"
@@ -70,5 +71,3 @@ Application configuration: !!omap
 - OUE_CONTENT_FIFO_256_COUNT: 8
 - OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 5
 - OUE_CONTENT_PUF_COUNT: 4
-- OUE_FIX_CHECKSUM_UNITS: 0
-- PAYLOAD_MERGE_CAPABILITY: "false"
