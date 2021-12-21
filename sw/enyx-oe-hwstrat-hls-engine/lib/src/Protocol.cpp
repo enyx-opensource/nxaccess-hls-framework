@@ -33,15 +33,7 @@ operator<<(std::ostream& os, const InstrumentConfigurationMessage&) {
 
 std::ostream&
 operator<<(std::ostream& os, const InstrumentConfigurationAckMessage& v) {
-    os << v.header
-       << " enabled: " <<  uint32_t(v.enabled)
-       << " instrument_id: " << be32toh(v.instrument_id)
-       << " tick_to_cancel_threshold: " <<  be64toh(v.tick_to_cancel_threshold)
-       << " tick_to_cancel_collection_id: " << be16toh(v.tick_to_cancel_collection_id)
-       << " tick_to_trade_bid_price: " <<  be64toh(v.tick_to_trade_bid_price)
-       << " tick_to_trade_bid_collection_id: " << be16toh(v.tick_to_trade_bid_collection_id)
-       << " tick_to_trade_ask_price: " << be64toh(v.tick_to_trade_ask_price)
-       << " tick_to_trade_ask_collection_id: " << be16toh(v.tick_to_trade_ask_collection_id);
+    os << v.header <<  v.configuration;
     return os;
 }
 
@@ -71,9 +63,9 @@ operator<<(std::ostream& os, const TickToTradeNotificationMessage& v) {
 
 std::ostream&
 operator<<(std::ostream& os, const InstrumentConfiguration& v) {
-    os << "t2c_threshold:" << be64toh(v.tick_to_cancel_threshold)
-       << " t2t_bid_price:" << be64toh(v.tick_to_trade_bid_price)
-       << " t2t_ask_price:" << be64toh(v.tick_to_trade_ask_price)
+    os << "t2c_threshold:" << be64toh(v.price_threshold)
+       << " t2t_bid_price:" << be64toh(v.bid_price)
+       << " t2t_ask_price:" << be64toh(v.ask_price)
        << " instrument_id:" << be32toh(v.instrument_id)
        << " t2t_bid_collection_id:" << be16toh(v.tick_to_trade_bid_collection_id)
        << " t2c_collection_id:" << be16toh(v.tick_to_cancel_collection_id)

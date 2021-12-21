@@ -152,15 +152,15 @@ int main(int argc, char* argv[]) {
 
         // Sending configuration
         hwstrat::demo::InstrumentConfiguration conf;
-        conf.tick_to_cancel_threshold = htobe64(threshold*PriceFactor);
+        conf.price_threshold = htobe64(threshold*PriceFactor);
         conf.instrument_id = htobe32(instrId);
         conf.tick_to_cancel_collection_id = htobe16(collectionId);
         conf.enabled = 1;
 
         conf.tick_to_trade_bid_collection_id = htobe64(0);
         conf.tick_to_trade_ask_collection_id = htobe64(0);
-        conf.tick_to_trade_bid_price = htobe64(0);
-        conf.tick_to_trade_ask_price = htobe64(0);
+        conf.bid_price = htobe64(0);
+        conf.ask_price = htobe64(0);
 
         LOG_ME(NX_INFO, "[%s] Sending Tick To Cancel Configuration: %s",
             LogPrefix, toStr(conf).c_str());
