@@ -58,8 +58,8 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 } current_state;
     #pragma HLS RESET variable=current_state
 
-    static bool is_end_of_extra = true; // at start, assume previous message contains end of extra
-    #pragma HLS RESET variable=is_end_of_extra
+    static bool start_of_nxbus_command = true;
+    #pragma HLS RESET variable=start_of_nxbus_command
 
     static uint64_t  last_sequence_number;
     #pragma HLS RESET variable=last_sequence_number
@@ -72,7 +72,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
         if (! nxbus_axi_in.empty()) {
             nxmd::nxbus nxbus_word_in = static_cast<nxmd::nxbus>(nxbus_axi_in.read());
 
-            if(is_end_of_extra) {
+            if(start_of_nxbus_command) {
 
                 // User could do some instrument filtering for this strategy here but
                 // in this Demonstration it is considered that all the feed handler is
@@ -104,7 +104,7 @@ Tick2trade::p_algo( hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
                 }
             }
 
-            is_end_of_extra = nxbus_word_in.end_of_extra; // keep this information in memory for next message
+            start_of_nxbus_command = nxbus_word_in.end_of_extra; // end_of_extra is set on the last word of a given command
         } else {
             //        std::cout << "nxbus input was empty" << std::endl;
         }

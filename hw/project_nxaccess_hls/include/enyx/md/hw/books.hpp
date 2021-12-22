@@ -117,8 +117,8 @@ public: // public data
         #pragma HLS INLINE recursive
         #pragma HLS PIPELINE enable_flush
 
-        static bool is_end_of_extra = true; // assume previous message contains end of extra
-        #pragma HLS RESET variable=is_end_of_extra
+        static bool start_of_nxbus_command = true;
+        #pragma HLS RESET variable=start_of_nxbus_command
 
         static uint8_t current_opcode = 0x00; // opcode of the current nxbus command (in case of multi-cycle commands)
         #pragma HLS RESET variable=current_opcode
@@ -136,7 +136,7 @@ public: // public data
         if (! nxbus_in.empty()) {
             nxbus_data_in = nxbus_in.read();
             nxbus_word_in = static_cast<nxbus>(nxbus_data_in);
-            if (is_end_of_extra) { // only process nxbus messages with EoE flag
+            if (start_of_nxbus_command) {
                 current_opcode = nxbus_word_in.opcode;
                 if ((nxbus_word_in.opcode == NXBUS_OPCODE_BOOK_UPDATE) &&
                         (nxbus_word_in.data2(7,0) == 0)) { //only keep level 0 of buy or sell side
@@ -157,9 +157,15 @@ public: // public data
                 }
             } else {
                 // extra-cycle word
+                ap_uint<256> nxbus_extra_data;
+                nxbus_extra_data(256-1, 192) = nxbus_word_in.order_id;
+                nxbus_extra_data(192-1, 128) = nxbus_word_in.price;
+                nxbus_extra_data(128-1, 64) = nxbus_word_in.data0;
+                nxbus_extra_data(64-1, 0) = nxbus_word_in.data2;
+
                 if (current_opcode == NXBUS_OPCODE_BOOK_UPDATE) {
                     // Capture the uncross depth value (HKEX specific)
-                    output.uncross_depth = nxbus_word_in.order_id(48-1, 40);
+                    output.uncross_depth = nxbus_extra_data(240-1, 232);
 
                     std::cout << "[DECISION][book_updater] [uncross_depth " << std::hex << output.uncross_depth << "] "
                                 << std::endl;
@@ -170,7 +176,7 @@ public: // public data
                 }
             }
 
-            is_end_of_extra = nxbus_word_in.end_of_extra; // keep EoE value for next
+            start_of_nxbus_command = nxbus_word_in.end_of_extra; // end_of_extra is set on the last word of a given command
         }
     } // p_book_updates
 

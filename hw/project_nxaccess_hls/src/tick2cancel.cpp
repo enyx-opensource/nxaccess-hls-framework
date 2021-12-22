@@ -54,8 +54,8 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
     // decision data
     static Tick2cancel::ContextData decision_data;
 
-    static bool is_end_of_extra = true; // assume previous message contains end of extra
-    #pragma HLS RESET variable=is_end_of_extra
+    static bool start_of_nxbus_command = true;
+    #pragma HLS RESET variable=start_of_nxbus_command
 
     if (! nxbus_axi_in.empty()) {
         // Local variables
@@ -72,7 +72,7 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
         //     return ;
         // }
 
-        if(is_end_of_extra) { // if previous burst is the end of a burst sequence
+        if(start_of_nxbus_command) { // if previous burst is the end of a burst sequence
 
             if (nxbus_word_in.opcode == nxmd::NXBUS_OPCODE_MISC_INPUT_PKT_INFO) {
 
@@ -111,7 +111,7 @@ void Tick2cancel::preprocess_nxbus(hls::stream<nxmd::nxbus_axi> & nxbus_axi_in,
             //book_req_out.write(nxbus_word_in.instr_id); // Request instrument's latest book to the book manager
 
         }
-        is_end_of_extra = nxbus_word_in.end_of_extra; // keep this information in memory for next message
+        start_of_nxbus_command = nxbus_word_in.end_of_extra; // end_of_extra is set on the last word of a given command
 
     } else {
         // std::cout << "nxbus input was empty" << std::endl;
