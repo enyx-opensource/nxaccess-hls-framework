@@ -1,35 +1,33 @@
-Application configuration: !!omap
-
-#---------------------------------------------
-#   /_\  _ __ _ __| (_)__ __ _| |_(_)___ _ _
-#  / _ \| '_ \ '_ \ | / _/ _` |  _| / _ \ ' \
-# /_/ \_\ .__/ .__/_|_\__\__,_|\__|_\___/_||_|
-#       |_|  |_|
-#---------------------------------------------
-
-
-# Upper limit for the HLS module frequency, the effective frequency depends on internal clock configuration
-- SANDBOX_APPLICATION_NAME: enyx_oe_hwstrat_hls_demo
-- TCP_FILL_TO_SANDBOX_PIPE_COUNT: 2
-- SANDBOX_TO_MSU_TOP_PIPE_COUNT: 2
-- FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 2
-- REVERT_TRIGGER_ARGUMENT: 1 # This is because TriggerArgument are not set in Order expected by orderEntry stack. So order should be reverted
+Application configuration:
+    #---------------------------------------------
+    #   /_\  _ __ _ __| (_)__ __ _| |_(_)___ _ _
+    #  / _ \| '_ \ '_ \ | / _/ _` |  _| / _ \ ' \
+    # /_/ \_\ .__/ .__/_|_\__\__,_|\__|_\___/_||_|
+    #       |_|  |_|
+    #---------------------------------------------
 
 
-- STRATEGY_CLK_NAME: "PCIE_USER_CLK"
+    # nxAccess Sandbox Configuration
+    SANDBOX_APPLICATION_NAME: enyx_oe_hwstrat_hls_demo
+    TCP_FILL_TO_SANDBOX_PIPE_COUNT: 2
+    SANDBOX_TO_MSU_TOP_PIPE_COUNT: 2
+    FEEDHANDLER_TO_SANDBOX_PIPE_COUNT: 2
+    REVERT_TRIGGER_ARGUMENT: 1 # This is because TriggerArgument are not set in Order expected by orderEntry stack. So order should be reverted
 
-# Max quantity of messages triggered by the HLS
-- CSRE_LARGE_COLLECTION_COUNT: 4096
+    # Frequencies of Application macro modules. They may be improved to save latency but also decrease fit success ratio
+    STRATEGY_CLK_NAME: PCIE_USER_CLK
 
-# Size in kBytes of order entry message memory
-- CSRE_MESSAGE_MEMORY_KBYTES: 64
+    # Max quantity of individual collections stored in orderEntry Stack
+    CSRE_LARGE_COLLECTION_COUNT: 4096
 
-# Number of supported TCP sessions by the hwrdware TCP stack
-- TCP_TOTAL_SESSION_COUNT: 8
+    # Size in kBytes of order entry message memory
+    CSRE_MESSAGE_MEMORY_KBYTES: 64
 
-# Depth of the TCP retry buffer in MTUs for each individual TCP session
-- TCP_RETRY_BUFFER_MTU_QTY: 12
+    # Number of supported TCP sessions by the hwrdware TCP stack
+    TCP_TOTAL_SESSION_COUNT: 8
 
-- OUE_CONTENT_FIFO_256_COUNT: 8
-- OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 5
-- OUE_CONTENT_PUF_COUNT: 4
+    # Data source configuration of nxAccess order entry stack
+    OUE_CONTENT_FIFO_256_COUNT: 8
+    OUE_CONTENT_FIFO_256_FILLING_HW_COUNT: 5
+    OUE_SEQNUM_DATA_SOURCE_QTY: 8
+    OUE_CONTENT_PUF_COUNT: 4
